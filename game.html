@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      display: flex;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: #0B0912;
+      overflow: hidden;
+    }
+
+    #gameArea {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 170px);
+      min-height: 320px;
+      overflow: hidden;
+    }
+
+    #gameArea canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block !important;
+    }
+
+    #gameArea canvas {
+      position: relative;
+      z-index: 10;
+    }
+
+    #pianoGraphic {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 170px;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      outline: none !important;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    #pianoGraphic svg {
+      width: min(98%, 2200px);
+      height: 100%;
+      display: block;
+      filter: none;
+      background-color: transparent !important;
+      margin-bottom: 20px;
+    }
+
+    #pianoGraphic rect.white-key {
+      transition: fill 0.12s ease;
+    }
+
+    #pianoGraphic rect.black-key {
+      transition: fill 0.12s ease;
+    }
+
+    #pianoGraphic rect.white-key.active {
+      fill: #64fedd;
+    }
+
+    #pianoGraphic rect.black-key.active {
+      fill: #64fedd;
+      opacity: 0.85;
+    }
+
+    @media (max-width: 860px) {
+      #pianoGraphic {
+        height: 120px;
+        bottom: 220px;
+        z-index: 15;
+      }
+
+      #gameArea {
+        height: calc(100vh - 340px);
+      }
+    }
+
+    @media (max-width: 480px) {
+      #pianoGraphic {
+        height: 90px;
+        bottom: 180px;
+        z-index: 15;
+      }
+
+      #gameArea {
+        height: calc(100vh - 310px);
+      }
+    }
+
+    /* Menu de controles no topo */
+    #gameMenu {
+      position: fixed;
+      top: 50px;
+      right: 20px;
+      z-index: 2000;
+      display: none;
+      flex-direction: row;
+      gap: 5px;
+    }
+
+    /* Pontuação no canto superior esquerdo */
+    #pontuacao {
+      position: fixed;
+      top: 100px;
+      left: 40px;
+      z-index: 1500;
+      display: none;
+      color: white;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.8rem;
+      margin: 0 0 10px 0;
+      padding: 5px;
+      border-radius: 8px;
+    }
+
+    #pontuacaoTitle {
+      position: fixed;
+      top: 55px;
+      left: 30px;
+      z-index: 1500;
+      color: white;
+      background-color: rgba(82, 82, 82);
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.6rem;
+      padding: 5px;
+      border-radius: 8px;
+    }
+
+    /* Nome da música no topo centro */
+    #nomeDaMusica {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1500;
+      display: none;
+      color: #09179b !important;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.8rem;
+      margin: 0;
+      padding: 10px 15px;
+      text-shadow:
+        -1px -1px 0 #F5873F,
+        1px -1px 0 #F5873F,
+        -1px 1px 0 #B03A74,
+        1px 1px 0 #B03A74;
+      background-color: rgba(0, 0, 0, 0.5);
+      border-radius: 8px;
+    }
+
+    /* Container de botões abaixo do nome da música */
+    #botoesMusica {
+      position: fixed;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1500;
+      display: none;
+      flex-direction: row;
+      gap: 15px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #botoesMusica button {
+      padding: 8px 20px;
+      color: #ffffff;
+      border-radius: 18px;
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s;
+      font-size: 0.6rem;
+      font-weight: 400;
+      border: none;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      font-family: 'Press Start 2P', monospace;
+      background-color: rgb(0, 0, 0);
+    }
+
+    #botoesMusica button:hover {
+      opacity: 0.8;
+    }
+
+    #botoesMusica button.ativo {
+      background-color: transparent !important;
+      border: 2px solid #64fedd !important;
+      color: #64fedd !important;
+      font-weight: bold !important;
+    }
+
+    /* Progress bar de pontuação */
+    #pontuacaoContainer {
+      position: fixed;
+      top: 80px;
+      left: 20px;
+      width: 200px;
+      height: 12px;
+      background: #202020;
+      border-radius: 50px;
+      overflow: hidden;
+      display: none;
+      z-index: 1500;
+      margin: 0;
+      border: 3px solid rgba(82, 82, 82);
+    }
+
+    #estrela,
+    #estrela2 {
+      position: fixed;
+      width: 1px;
+      height: 18px;
+      background-color: #ffffff;
+      pointer-events: none;
+      z-index: 22201;
+    }
+
+    #estrela {
+      left: 160px
+    }
+
+    #estrela2 {
+      left: 190px
+    }
+
+    #pontuacaoBar {
+      height: 100%;
+      background: linear-gradient(90deg, #64fedd, #00d4ff);
+      border-radius: 50px;
+      box-shadow: 0px 0px 5px 5px rgba(48, 228, 204, 0.5);
+      width: 0%;
+      transition: width 0.2s ease;
+    }
+
+    /* Progress bar no canto superior direito */
+    #progressContainer {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      width: 300px;
+      height: 12px;
+      background: #202020;
+      border-radius: 50px;
+      overflow: hidden;
+      display: none;
+      flex-direction: row;
+      z-index: 1500;
+      margin: 0;
+      border: 3px solid rgba(82, 82, 82);
+
+    }
+
+    #progressBar {
+      height: 100%;
+      background: #64fedd;
+      border-radius: 50px;
+      box-shadow: 0px 0px 5px 5px rgba(48, 228, 204, 0.5);
+      width: 0%;
+      transition: width 0.2s ease;
+    }
+
+    #resetarButton,
+    #voltarButton {
+      padding: 10px 20px;
+      color: #ffffff;
+      border-radius: 18px;
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s;
+      font-size: 0.7em;
+      font-weight: 400;
+      border: none;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    #resetarButton {
+      background-color: rgb(0, 0, 0, 0.3);
+    }
+
+    #voltarButton {
+      background-color: rgb(0, 0, 0, 0.3);
+    }
+
+    #resetarButton:hover,
+    #voltarButton:hover {
+      opacity: 0.8;
+    }
+
+    #fimDaCena {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      color: white;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100vw;
+      height: 100vh;
+      z-index: 30000;
+      background: rgba(0, 0, 0, 0.85);
+    }
+
+    #fimDaCena h2 {
+      font-size: 2em;
+    }
+
+    #fimDaCena button {
+      padding: 12px 40px;
+      color: #ffffff;
+      border-radius: 18px;
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s;
+      font-size: 0.8em;
+      font-weight: 400;
+      border: none;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      font-family: 'Press Start 2P', monospace;
+      background-color: transparent;
+      margin: 0;
+      display: block;
+    }
+
+    #fimDaCena button:hover {
+      opacity: 0.8;
+    }
+
+    #pontuacaoFinal {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 5rem;
+      color: gold;
+      margin: 0;
+      padding: 20px;
+      letter-spacing: 5px;
+    }
+
+    #fimDaCena-buttons {
+      display: flex;
+      gap: 20px;
+      margin-top: 50px;
+    }
+
+    /* Estilo das estrelas no final */
+    .estrelas {
+      font-size: 4rem;
+      letter-spacing: 20px;
+      color: #F5873F;
+      text-shadow: 0 0 20px rgba(245, 135, 63, 0.8);
+      margin: 30px 0;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .estrelas span {
+      animation: starAppear 0.6s ease-out forwards;
+      opacity: 0;
+    }
+
+    .estrelas span:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    .estrelas span:nth-child(2) {
+      animation-delay: 0.3s;
+    }
+
+    .estrelas span:nth-child(3) {
+      animation-delay: 0.6s;
+    }
+
+    #fraseMotivacao {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1rem;
+      color: #64fedd;
+      margin: 20px 0;
+      padding: 10px 20px;
+      min-height: 20px;
+      animation: fadeIn 0.8s ease-out forwards;
+      animation-delay: 1s;
+      opacity: 0;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes starAppear {
+      0% {
+        opacity: 0;
+        transform: scale(0) rotateZ(-180deg);
+      }
+
+      50% {
+        transform: scale(1.2);
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1) rotateZ(0deg);
+      }
+    }
+
+    /* Animação de pontos flutuantes */
+    .floating-points {
+      position: fixed;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1.2rem;
+      font-weight: bold;
+      pointer-events: none;
+      z-index: 2001;
+      opacity: 1;
+      animation: floatPoints 2s ease-out forwards;
+    }
+
+    .floating-points.positive {
+      color: #64fedd;
+      text-shadow: 0 0 10px rgba(100, 254, 221, 0.8);
+    }
+
+    .floating-points.negative {
+      color: #ff4444;
+      text-shadow: 0 0 10px rgba(255, 68, 68, 0.8);
+    }
+
+    .estrelas {
+      color: #FC0;
+      font-size: 58px;
+    }
+
+    /* Ranking */
+    #rankingEntry {
+      margin: 1rem 0;
+      text-align: center;
+      width: 100%;
+    }
+
+    #rankingMsg {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      color: #E323CA;
+    }
+
+    #rankingInputWrapper {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    #rankingNomeInput {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #E323CA;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-size: 1rem;
+      outline: none;
+      width: 180px;
+    }
+
+    #rankingNomeInput::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    #rankingConfirmarBtn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      background: #E323CA;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    #rankingConfirmarBtn:hover {
+      background: #c41daa;
+    }
+
+    #rankingOl {
+      list-style: none;
+      padding: 0;
+      margin: 0.5rem auto;
+      max-width: 340px;
+      text-align: left;
+    }
+
+    .ranking-item {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .ranking-destaque {
+      background: rgba(227, 35, 202, 0.2);
+      color: white;
+      font-weight: 600;
+    }
+
+    .ranking-pos {
+      min-width: 28px;
+      color: #E323CA;
+      font-weight: 700;
+    }
+
+    .ranking-nome {
+      flex: 1;
+    }
+
+    .ranking-pts {
+      min-width: 50px;
+      text-align: right;
+      font-weight: 600;
+    }
+
+    .ranking-data {
+      min-width: 70px;
+      text-align: right;
+      font-size: 0.75rem;
+      opacity: 0.6;
+    }
+
+    @keyframes floatPoints {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+
+      50% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0;
+        transform: translateY(-80px) scale(0.8);
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        width: 100vw;
+        overflow-x: hidden;
+      }
+
+      #gameMenu {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        gap: 5px;
+        z-index: 2000;
+      }
+
+      #gameMenu button {
+        font-size: 0.5rem;
+        padding: 5px 10px;
+      }
+
+      #pontuacaoTitle,
+      #pontuacao {
+        position: fixed;
+        font-size: 0.5rem;
+        left: 10px;
+        top: 45px;
+      }
+
+      #pontuacao {
+        top: 65px;
+      }
+
+      #nomeDaMusica {
+        position: fixed;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.5rem;
+        padding: 5px 10px;
+        width: 80%;
+      }
+
+      #botoesMusica {
+        top: 40px;
+        gap: 5px;
+      }
+
+      #botoesMusica button {
+        font-size: 0.45rem;
+        padding: 4px 10px;
+      }
+
+      #pontuacaoContainer {
+        width: 120px;
+        top: 75px;
+        left: 10px;
+      }
+
+      #progressContainer {
+        width: 120px;
+        top: 75px;
+        right: 10px;
+      }
+
+      canvas {
+        max-width: 100vw;
+        max-height: calc(100vh - 20px);
+        width: auto !important;
+        height: auto !important;
+        display: block !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #gameMenu {
+        top: 5px;
+        right: 5px;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      #gameMenu button {
+        font-size: 0.4rem;
+        padding: 4px 8px;
+      }
+
+      #pontuacaoTitle {
+        font-size: 0.4rem;
+        top: 35px;
+        left: 5px;
+      }
+
+      #pontuacao {
+        font-size: 0.4rem;
+       
+      }
+
+      #nomeDaMusica {
+        font-size: 0.4rem;
+        padding: 3px 5px;
+        top: 5px;
+      }
+
+      #botoesMusica {
+        top: 30px;
+        gap: 3px;
+      }
+
+      #botoesMusica button {
+        font-size: 0.35rem;
+        padding: 3px 8px;
+      }
+
+      #pontuacaoContainer {
+        width: 80px;
+        height: 8px;
+        top: 55px;
+        left: 5px;
+      }
+
+      #progressContainer {
+        width: 80px;
+        height: 8px;
+        top: 55px;
+        right: 5px;
+      }
+
+      #pontuacaoContainer img,
+      #estrela,
+      #estrela2 {
+        display: none;
+      }
+
+      canvas {
+        max-width: 100vw;
+        max-height: calc(100vh - 20px);
+        width: auto !important;
+        height: auto !important;
+        display: block !important;
+      }
+    }
+    
+    @media (max-width: 400px) {
+      body { width: 100vw; }
+
+      canvas {
+        max-width: 100vw;
+        max-height: calc(100vh - 20px);
+        width: auto !important;
+        height: auto !important;
+        display: block !important;
+      }
+    }
+  </style>
+  <script>
+    // Iniciar o jogo automaticamente ao carregar
+    document.addEventListener("DOMContentLoaded", () => {
+      const modoArmazenado = localStorage.getItem("modo") || "autoplay";
+      const autoplayButton = document.getElementById("autoplayButton");
+      const jogarButton = document.getElementById("jogarButton");
+
+      // Pequeno delay para garantir que o script principal foi carregado
+      setTimeout(() => {
+        if (modoArmazenado === "autoplay") {
+          autoplayButton.click();
+        } else {
+          jogarButton.click();
+        }
+      }, 100);
+    });
+  </script>
+
+
+</head>
+
+
+<body>
+  <div id="gameArea"></div>
+  <!-- Menu de controles durante o jogo -->
+  <div id="gameMenu">
+    <button id="resetarButton">Resetar</button>
+    <button id="voltarButton">Voltar</button>
+  </div>
+
+  <!-- Botões escondidos para inicialização -->
+  <button id="jogarButton" style="display: none;"></button>
+  <button id="autoplayButton" style="display: none;"></button>
+
+  <!-- Pontuação no canto superior esquerdo -->
+  <h2 id="pontuacaoTitle">Pontuação</h2>
+  <h2 id="pontuacao">0</h2>
+
+  <!-- Nome da música no topo -->
+  <h2 id="nomeDaMusica">Nome da Música</h2>
+
+  <!-- Botões JOGAR e AUTOPLAY abaixo do nome -->
+  <div id="botoesMusica">
+    <button id="botoesJogar" onclick="document.getElementById('jogarButton').click()">Jogar</button>
+    <button id="botoesAutoplay" onclick="document.getElementById('autoplayButton').click()">AutoPlay</button>
+  </div>
+
+  <!-- Progress bar de pontuação -->
+  <div id="pontuacaoContainer">
+    <div>
+      <div id="estrela"></div>
+      <img src="./assets/estrela.svg" style="width: 15px; position: fixed; left: 153px; top: 98px;">
+    </div>
+    <div>
+      <div id="estrela2"></div>
+      <img src="./assets/estrela.svg" style="width: 15px; position: fixed; left: 183px; top: 98px;">
+    </div>
+    <div id="pontuacaoBar"></div>
+  </div>
+
+  <!-- Progress bar no canto superior direito -->
+  <div id="progressContainer">
+    <div id="progressBar"></div>
+  </div>
+
+  <div id="pianoGraphic"></div>
+
+  <div id="nomeJogadorModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:10000; align-items:center; justify-content:center;">
+    <div style="background:#1a1a1c; border:1px solid rgba(255,255,255,0.1); border-radius:18px; padding:24px 22px; width:min(90vw, 360px); box-shadow:0 18px 40px rgba(0,0,0,0.45); text-align:center;">
+      <h3 style="margin:0 0 12px; font-size:1.1rem; color:#fff;">Antes de começar</h3>
+      <p style="margin:0 0 16px; color:rgba(255,255,255,0.75); font-size:0.85rem;">Digite seu nome para registrar a sua pontuação.</p>
+      <input id="nomeJogadorInput" type="text" maxlength="15" autocomplete="off" placeholder="Seu nome" style="width:100%; box-sizing:border-box; border:1px solid rgba(255,255,255,0.2); border-radius:10px; background:rgba(255,255,255,0.04); color:#fff; padding:12px 14px; font-size:1rem; margin-bottom:12px;" />
+      <button id="nomeJogadorConfirmarBtn" style="width:100%; padding:12px; border:none; border-radius:10px; background:#E323CA; color:#fff; font-weight:700; cursor:pointer;">Iniciar fase</button>
+    </div>
+  </div>
+
+  <div id="fimDaCena">
+    <div class="estrelas">
+      <span>&#9733;</span>
+      <span>&#9734;</span>
+      <span>&#9734;</span>
+    </div>
+    <h3 id="fraseMotivacao">Parabéns!</h3>
+    <h2 id="pontuacaoFinal">0</h2>
+    <div id="fimDaCena-buttons">
+      <button onclick="window.location.href='game.html'">Jogar novamente</button>
+      <button onclick="window.location.href='selector.html'">Voltar</button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js">
+  </script>
+</body>
+
+
+</html>

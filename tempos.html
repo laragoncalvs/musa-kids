@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Marcar Tempo das Teclas</title>
+  <style>
+  
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    pre {
+      background: #f0f0f0;
+      padding: 10px;
+      font-family: monospace;
+    }
+
+    #log {
+    background-color: #f4f4f4;
+    border: 1px solid #ccc;
+    padding: 10px;
+    white-space: pre-wrap; 
+    color: #333;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+  </style>
+</head>
+<body>
+  <button id="startButton">Iniciar</button>
+  <button id="stopButton" disabled>Parar</button>
+  <h2>Pressione qualquer tecla </h2>
+  <pre id="log">Pressione iniciar...</pre>
+
+  <script>
+    let startTime = null;
+    let isRecording = false;
+    const pressedTimes = [];
+    const logElement = document.getElementById('log');
+    const startButton = document.getElementById('startButton');
+    const stopButton = document.getElementById('stopButton');
+
+    startButton.addEventListener('click', () => {
+      startTime = performance.now();
+      isRecording = true;
+      pressedTimes.length = 0;
+      logElement.textContent = "Iniciado! Pressione as teclas...\n";
+      stopButton.disabled = false;
+      startButton.disabled = true;
+    });
+
+    stopButton.addEventListener('click', () => {
+      isRecording = false;
+      logElement.textContent += `\nParado! Total de teclas pressionadas: ${pressedTimes.length}`;
+      startButton.disabled = false;
+      stopButton.disabled = true;
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (!isRecording) return;
+
+      const now = performance.now();
+      const elapsed = Math.round(now - startTime);
+      pressedTimes.push(elapsed);
+
+      logElement.textContent = `Tempos das teclas pressionadas (em ms):\n${pressedTimes.join(', ')}`;
+    });
+  </script>
+</body>
+</html>

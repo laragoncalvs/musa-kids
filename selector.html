@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      display: flex;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: #0e0c17;
+      overflow-x: hidden;
+    }
+
+    .telaInicial {}
+
+    .telaInicial h1 {
+      font-size: 1rem;
+      font-family: 'Press Start 2P', monospace;
+      display: inline;
+      margin: 0 !important;
+    }
+
+    .telaInicial span {
+      font-size: 1em;
+      font-family: 'Press Start 2P', monospace;
+      color: #917C8E;
+    }
+
+    #telaInicial {
+      margin-top: 5vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: rgba(0, 0, 0, 0.3);
+      padding: 50px;
+      border-radius: 20px;
+      width: 50%;
+    }
+
+    #jogarButton,
+    #autoplayButton, #rankingButton {
+      padding: 15px 40px;
+      color: #0e0e0e;
+      border-radius: 18px;
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s;
+      font-size: 0.8em;
+      font-weight: 400;
+      border: none;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      font-family: 'Press Start 2P', monospace;
+            background: linear-gradient(0deg, rgba(245, 135, 63, 1) 50%, rgba(176, 58, 116, 1) 100%);
+
+    }
+
+
+
+    #autoplayButton:hover,
+    #jogarButton:hover, #rankingButton:hover {
+      background-color: #555;
+      color: white;
+    }
+
+    .textoIntermediarios {
+      font-size: 0.7rem;
+      margin-top: 30px;
+      font-family: 'Press Start 2P', monospace;
+      text-align: start;
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 10px;
+      /* espaço entre o texto e a linha */
+    }
+
+    .textoIntermediarios h5 {
+      margin: 0;
+      font-size: 0.7rem;
+      color: #ffffff;
+      font-family: 'Press Start 2P', monospace;
+      width: auto;
+      /* não ocupa mais 100% */
+      white-space: nowrap;
+      /* evita que o texto quebre linha */
+      flex-shrink: 0;
+      /* mantém o tamanho natural do texto */
+    }
+
+    .textoIntermediarios .linha {
+      height: 1px;
+      background-color: #ffffff;
+      flex: 1;
+      /* ocupa todo o espaço restante */
+    }
+
+    .ativo {
+      background-color: transparent !important;
+      border: 1px solid #E323CA !important;
+      color: #E323CA !important;
+      font-weight: bold !important;
+      margin-bottom: 12px;
+      background-color: #260C29 !important;
+    }
+
+    .ativo span {
+      color: #E323CA !important;
+    }
+
+    .musicaEscolhida {
+      background-color: transparent !important;
+      color: #E323CA !important;
+      text-shadow: none !important;
+      background-color: #260C29 !important;
+      padding: 15px !important;
+      border-radius: 12px !important;
+      border: 1px solid #E323CA !important;
+    }
+
+    .titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 2.3rem !important;
+      text-shadow: none !important;
+      color: white;
+
+    }
+
+    button {
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    .musicaEscolhida h5 {
+      color: #E323CA !important;
+      font-family: 'Press Start 2P', monospace;
+      margin-top: 8px;
+      font-size: 0.7em;
+    }
+
+    .musicaEscolhida span {
+      color: #64fedd !important;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1em;
+    }
+     .musicaEscolhida svg {
+      color: #E323CA !important;
+  
+    }
+
+    .musicaEscolhida.text {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+ #buttons h1 {
+    
+  
+      font-size: 0.75rem;
+    }
+    #buttons h5 {
+      color: #917C8E;
+      font-family: 'Press Start 2P', monospace;
+      margin-top: 8px;
+      font-size: 0.7em;
+    }
+
+    #buttons div {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    #buttons svg {
+      color: #917C8E;
+    }
+
+
+
+    #area {
+      position: absolute;
+      /* era fixed — isso quebra tudo */
+      background-color: rgba(28, 231, 187, 0.75);
+      top: 0;
+      height: 100%;
+      opacity: 0.5;
+      pointer-events: none;
+      transition: left 0.35s ease, width 0.35s ease;
+    }
+
+    #pianoImg {
+      margin-bottom: 10px;
+      z-index: 0;
+      width: 100%;
+    }
+
+    a {
+      display: inline;
+    }
+
+    #buttons {
+      display: flex;
+      width: 100%;
+
+    }
+
+    #elvis,
+    #tchai,
+    #bethoven,
+    #littlestar,
+    #jinglebell {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #917C8E;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      background-color: #160519;
+    }
+
+    #modoContainer {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .botaoModo {
+      padding: 15px;
+      width: 100%;
+      height: 70px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Press Start 2P', monospace;
+      background-color: transparent;
+      color: #917C8E;
+      display: flex;
+      align-items: flex-start;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .botaoModo,
+    h5 {
+      margin-bottom: 5px;
+      margin-top: 0px;
+      font-size: 0.8rem;
+    }
+
+        .botaoModo,
+    span {
+      font-size: 0.5rem;
+    }
+
+    .botaoModo:hover {
+      transform: scale(1.05);
+
+    }
+
+
+
+    #inicialButtons {
+      display: flex;
+      gap: 20px;
+      margin-top: 10px;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    #inicialButtons button {
+      color: #0e0e0e;
+    }
+
+
+
+   
+
+    @keyframes rankingPiscar {
+
+      0%,
+      100% {
+        color: white;
+      }
+
+      50% {
+        color: #E323CA;
+      }
+    }
+
+    #rankingModalBox {
+      background: #0B0912;
+      border: 1px solid #E323CA;
+      border-radius: 16px;
+      width: 460px;
+      max-width: 90vw;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 28px 28px 24px;
+      color: white;
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    #rankingModalHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    #rankingModalTitulo {
+      font-size: 0.85rem;
+      color: #E323CA;
+    }
+
+    #rankingFecharBtn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      line-height: 1;
+    }
+
+    #rankingFecharBtn:hover {
+      color: white;
+    }
+
+    #rankingModalFiltros {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 12px;
+    }
+
+    #rankingModalMusica {
+      font-size: 0.5rem;
+      color: rgba(255, 255, 255, 0.6);
+      flex: 1;
+      line-height: 1.4;
+    }
+
+    #rankingModalModos {
+      display: flex;
+      gap: 8px;
+    }
+
+    #rankingModalModoAtual {
+      font-size: 0.45rem;
+      color: #E323CA;
+      border: 1px solid #E323CA;
+      border-radius: 20px;
+      padding: 4px 12px;
+      white-space: nowrap;
+    }
+
+    #rankingModalLista {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 8px;
+    }
+
+    #rankingModalLista li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 0.5rem;
+      color: rgba(255, 255, 255, 0.8);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    #rankingModalLista li:first-child {
+      background: rgba(227, 35, 202, 0.12);
+    }
+
+    #rankingModalLista li:nth-child(2) {
+      background: rgba(227, 35, 202, 0.07);
+    }
+
+    #rankingModalLista li:nth-child(3) {
+      background: rgba(227, 35, 202, 0.04);
+    }
+
+    .rm-pos {
+      min-width: 26px;
+      color: #E323CA;
+      font-weight: 700;
+    }
+
+    .rm-nome {
+      flex: 1;
+    }
+
+    .rm-pts {
+      color: #64fedd;
+      min-width: 48px;
+      text-align: right;
+    }
+
+    .rm-data {
+      min-width: 60px;
+      text-align: right;
+      font-size: 0.4rem;
+      opacity: 0.5;
+    }
+
+    #rankingModalVazio {
+      font-size: 0.5rem;
+      color: rgba(255, 255, 255, 0.3);
+      text-align: center;
+      margin: 20px 0 0;
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        width: 100vw;
+        overflow-x: hidden;
+      }
+
+      #telaInicial {
+        padding: 24px 16px;
+        margin-top: 10px;
+        width: calc(100vw - 24px);
+      }
+
+      .buttons {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .buttons button {
+        width: 100%;
+        font-size: clamp(0.6em, 2vw, 0.8em);
+      }
+
+      .buttons button h1 {
+        font-size: clamp(0.7rem, 3vw, 1rem);
+        margin: 5px 0;
+
+      }
+
+      .buttons button span {
+        font-size: clamp(0.5rem, 2vw, 0.8rem);
+      }
+
+      #modoContainer {
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+      }
+
+      .botaoModo {
+        width: 100%;
+        height: auto;
+        padding: 10px 5px;
+        font-size: clamp(0.5em, 2vw, 0.8em);
+      }
+
+      .botaoModo h5 {
+        margin: 3px 0;
+        font-size: clamp(0.5em, 2vw, 0.8em);
+      }
+
+      .botaoModo small {
+        font-size: clamp(0.3em, 1.5vw, 0.6em) !important;
+      }
+
+      #pianoImg {
+        width: 100%;
+        overflow-x: auto;
+      }
+
+      #pianoImg img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+
+
+      #inicialButtons {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+      }
+
+      #inicialButtons button {
+        width: 100%;
+        padding: 10px 20px;
+        font-size: clamp(0.6em, 2vw, 0.8em);
+      }
+
+      #rankingButton {
+        font-size: clamp(0.5em, 2vw, 0.6em);
+        margin: 15px 0;
+      }
+
+      h5 {
+        font-size: clamp(0.5rem, 2vw, 1rem);
+      }
+
+      .titulo {
+    font-size: 1rem !important;
+    line-height: 1.5;
+  }
+
+  #jinglebell h1,
+  #littlestar h1,
+  #elvis h1,
+  #bethoven h1,
+  #tchai h1 {
+    font-size: 0.5rem !important;
+    line-height: 1.7;
+  }
+
+  #jinglebell h5,
+  #littlestar h5,
+  #elvis h5,
+  #bethoven h5,
+  #tchai h5 {
+    font-size: 0.38rem !important;
+    line-height: 1.5;
+  }
+
+  #jinglebell span,
+  #littlestar span,
+  #elvis span,
+  #bethoven span,
+  #tchai span {
+    font-size: 0.35rem !important;
+  }
+
+  .botaoModo h5 {
+    font-size: 0.45rem !important;
+  }
+
+  .botaoModo span {
+    font-size: 0.3rem !important;
+  }
+
+  #jogarButton,
+  #autoplayButton,
+  #rankingButton {
+    font-size: 0.45rem;
+  }
+
+  .textoIntermediarios h5 {
+    font-size: 0.45rem;
+  }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        width: 100vw;
+        padding: 0;
+      }
+#rankingButton {
+        font-size: clamp(0.5em, 2vw, 0.6em);
+        margin: 0;
+      }
+      #telaInicial {
+        padding: 18px 12px;
+        margin-top: 5px;
+        width: calc(100vw - 16px);
+        border-radius: 10px;
+      }
+
+      .titulo {
+        font-size: clamp(0.8rem, 4vw, 1.5rem);
+        word-break: break-word;
+      }
+
+      .buttons {
+        width: 100%;
+        flex-direction: column;
+        margin-bottom: 10px;
+      }
+
+      .buttons button {
+        width: 100%;
+        font-size: 0.5rem;
+        text-align: left;
+        line-height: 1.5;
+        padding: 12px;
+      }
+
+      .buttons a {
+        width: 30px;
+      }
+
+   
+
+      .buttons a img {
+        width: 15px;
+      }
+
+      #modoContainer {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .botaoModo {
+        width: 100%;
+        min-height: 56px;
+        height: auto;
+        font-size: 0.8rem;
+      }
+
+
+
+
+      #pianoImg h5 {
+        font-size: 0.6rem;
+      }
+
+      #rankingModalBox {
+        width: 95vw;
+        padding: 16px 12px;
+      }
+
+      #rankingModalTitulo {
+        font-size: 0.7rem;
+      }
+
+      #rankingModalMusica {
+        font-size: 0.45rem;
+      }
+
+      #inicialButtons {
+        flex-direction: column;
+        height: auto;
+      }
+
+      #inicialButtons button {
+        flex: 1 1 auto;
+        width: 100%;
+      }
+
+      #rankingModalModoAtual {
+        font-size: 0.4rem;
+        padding: 3px 8px;
+      }
+
+      #rankingModalLista li {
+        font-size: 0.45rem;
+        padding: 6px 8px;
+      }
+    }
+  </style>
+  <script>
+    let musica = null;
+    let modo = "jogador"; // Modo padrão é "jogador"
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Referencias aos elementos de música
+      const littlestarMusic = document.getElementById("littlestar");
+      const elvisMusic = document.getElementById("elvis");
+      const bethovenMusic = document.getElementById("bethoven");
+      const tchaiMusic = document.getElementById("tchai");
+      const jinglebellMusic = document.getElementById("jinglebell");
+
+      const area = document.getElementById("area");
+
+      // Referências aos botões de modo
+      const botaoAprendiz = document.getElementById("botaoAprendiz");
+      const botaoJogador = document.getElementById("botaoJogador");
+
+      // Referências aos botões de ação
+      const jogarButton = document.getElementById("jogarButton");
+      const autoplayButton = document.getElementById("autoplayButton");
+
+      const rankingButton = document.getElementById('rankingButton');
+      const rankingModal = document.getElementById('rankingModal');
+      const rankingFecharBtn = document.getElementById('rankingFecharBtn');
+      const rankingModalLista = document.getElementById('rankingModalLista');
+      const rankingModalVazio = document.getElementById('rankingModalVazio');
+      const rankingModalMusica = document.getElementById('rankingModalMusica');
+      let rankingModoAtivo = 'jogador'; // valor inicial
+      const nomesMusicas = {
+        "littlestar": "Twinkle, Twinkle, Little Star",
+        "jinglebell": "Jingle Bells",
+        "elvis": "Beethoven - Für Elise",
+        "bethoven": "Bethoven - Ode á Alegria",
+        "tchai": "Tchaikovsky - Lago dos Cisnes"
+      };
+
+      // Credenciais Supabase
+      const SUPABASE_URL = 'https://jqfpexrinkycxobbmmyx.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZnBleHJpbmt5Y3hvYmJtbXl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4ODUzNjMsImV4cCI6MjA5MzQ2MTM2M30.pKgaVo1Gcr9LQcixVhwEHwv61pQOzGDsvyfpHCdGWwU';
+
+      async function carregarRankingModal() {
+        rankingModalLista.innerHTML = '';
+        rankingModalVazio.style.display = 'none';
+        rankingModalLista.style.display = 'block';
+        rankingModalLista.innerHTML = '<li style="color:rgba(255,255,255,0.3);font-size:0.45rem;list-style:none;text-align:center;padding:16px 0;">Carregando...</li>';
+
+        let lista = [];
+        try {
+          const url = new URL(`${SUPABASE_URL}/rest/v1/rankings`);
+          url.searchParams.append('musica', `eq.${musica}`);
+          url.searchParams.append('modo', `eq.${modo}`);
+          url.searchParams.append('order', 'pontuacao.desc');
+
+          const response = await fetch(url.toString(), {
+            headers: {
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+              'apikey': SUPABASE_ANON_KEY
+            }
+          });
+
+          if (!response.ok) {
+            const erroTexto = await response.text().catch(() => 'sem corpo de erro');
+            console.error('Erro ao carregar ranking:', response.status, response.statusText, erroTexto);
+            lista = [];
+          } else {
+            lista = await response.json();
+          }
+        } catch (err) {
+          console.error('Erro ao carregar ranking modal:', err);
+          lista = [];
+        }
+
+        const [diaMinimo, mesMinimo, anoMinimo] = '26/08/2026'.split('/');
+        const dataMinima = new Date(Number(anoMinimo), Number(mesMinimo) - 1, Number(diaMinimo));
+        lista = lista.filter((entry) => {
+          const [dia, mes, ano] = String(entry.data || '').split('/');
+          if (!dia || !mes || !ano) return false;
+          const dataEntrada = new Date(Number(ano), Number(mes) - 1, Number(dia));
+          return dataEntrada >= dataMinima;
+        });
+
+        rankingModalMusica.textContent = nomesMusicas[musica] || musica;
+        document.getElementById('rankingModalModoAtual').textContent =
+          modo === 'aprendiz' ? 'Aprendiz' : 'Jogador';
+
+        rankingModalLista.innerHTML = '';
+
+        if (lista.length === 0) {
+          rankingModalVazio.style.display = 'block';
+          rankingModalLista.style.display = 'none';
+        } else {
+          rankingModalVazio.style.display = 'none';
+          rankingModalLista.style.display = 'block';
+          lista.forEach((entry, i) => {
+            if (i >= 10) return;
+
+              const li = document.createElement('li');
+              const medalha = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}º`;
+              li.innerHTML = `
+              <span class="rm-pos">${medalha}</span>
+              <span class="rm-nome">${entry.nome}</span>
+              <span class="rm-pts">${entry.pontuacao}</span>
+              <span class="rm-data">${entry.data}</span>
+              `;
+              rankingModalLista.appendChild(li);
+            
+            
+          });
+        }
+      }
+
+      rankingButton.addEventListener('click', () => {
+        rankingModal.style.display = 'flex';
+        carregarRankingModal().catch(console.error);
+      });
+
+      rankingFecharBtn.addEventListener('click', () => {
+        rankingModal.style.display = 'none';
+      });
+
+      rankingModal.addEventListener('click', (e) => {
+        if (e.target === rankingModal) rankingModal.style.display = 'none';
+      });
+      const PIANO_W = 722; // largura original da imagem do piano
+
+      function setArea(leftPx, widthPx) {
+        area.style.left = (leftPx / PIANO_W * 100) + "%";
+        area.style.width = (widthPx / PIANO_W * 100) + "%";
+      }
+
+
+      // Atualiza o modal sempre que a música selecionada muda — adicione esta linha
+      // em cada listener de música, logo após o `musica = "..."`:
+      // carregarRankingModal(); (só tem efeito se o modal estiver aberto)
+
+      // Recuperar modo do localStorage se existir
+      const modoSalvo = localStorage.getItem("modoSelecionado");
+      if (modoSalvo) {
+        modo = modoSalvo;
+      }
+
+      // Inicializar estado dos botões de modo
+      atualizarEstadoBotoesModo();
+
+      musica = "jinglebell";
+      littlestarMusic.classList.remove("musicaEscolhida");
+      elvisMusic.classList.remove("musicaEscolhida");
+      bethovenMusic.classList.remove("musicaEscolhida");
+      tchaiMusic.classList.remove("musicaEscolhida");
+      jinglebellMusic.classList.add("musicaEscolhida");
+
+      setArea(333, 111);
+
+      // Event listeners para seleção de modo
+      botaoAprendiz.addEventListener("click", () => {
+        modo = "aprendiz";
+        localStorage.setItem("modoSelecionado", "aprendiz");
+        atualizarEstadoBotoesModo();
+        if (rankingModal.style.display === 'flex') carregarRankingModal().catch(console.error);
+
+      });
+
+      botaoJogador.addEventListener("click", () => {
+        modo = "jogador";
+        localStorage.setItem("modoSelecionado", "jogador");
+        atualizarEstadoBotoesModo();
+        if (rankingModal.style.display === 'flex') carregarRankingModal().catch(console.error);
+
+      });
+
+      // Event listeners para seleção de música
+      elvisMusic.addEventListener("click", () => {
+        musica = "elvis"
+        bethovenMusic.classList.remove("musicaEscolhida")
+        tchaiMusic.classList.remove("musicaEscolhida")
+        littlestarMusic.classList.remove("musicaEscolhida")
+        elvisMusic.classList.add("musicaEscolhida");
+        jinglebellMusic.classList.remove("musicaEscolhida");
+        setArea(250, 208);
+        if (rankingModal.style.display === 'flex') carregarRankingModal().catch(console.error);
+
+      })
+
+      bethovenMusic.addEventListener("click", () => {
+        musica = "bethoven"
+        bethovenMusic.classList.add("musicaEscolhida");
+        elvisMusic.classList.remove("musicaEscolhida");
+        tchaiMusic.classList.remove("musicaEscolhida");
+        littlestarMusic.classList.remove("musicaEscolhida");
+        jinglebellMusic.classList.remove("musicaEscolhida");
+        setArea(208, 181);
+        if (rankingModal.style.display === 'flex') carregarRankingModal().catch(console.error);
+
+      })
+
+      tchaiMusic.addEventListener("click", () => {
+        musica = "tchai"
+        tchaiMusic.classList.add("musicaEscolhida")
+        bethovenMusic.classList.remove("musicaEscolhida");
+        elvisMusic.classList.remove("musicaEscolhida");
+        littlestarMusic.classList.remove("musicaEscolhida");
+        jinglebellMusic.classList.remove("musicaEscolhida");
+        setArea(360, 153);
+        if (rankingModal.style.display === 'flex') carregarRankingModal().catch(console.error);
+
+      })
+
+      littlestarMusic.addEventListener("click", () => {
+        musica = "littlestar"
+        littlestarMusic.classList.add("musicaEscolhida")
+        bethovenMusic.classList.remove("musicaEscolhida");
+        elvisMusic.classList.remove("musicaEscolhida");
+        tchaiMusic.classList.remove("musicaEscolhida");
+        jinglebellMusic.classList.remove("musicaEscolhida");
+        setArea(180, 223);
+        if (rankingModal.style.display === 'flex') carregarRankingModal().catch(console.error);
+
+      })
+      jinglebellMusic.addEventListener("click", () => {
+        musica = "jinglebell"
+        jinglebellMusic.classList.add("musicaEscolhida")
+        bethovenMusic.classList.remove("musicaEscolhida");
+        elvisMusic.classList.remove("musicaEscolhida");
+        tchaiMusic.classList.remove("musicaEscolhida");
+        littlestarMusic.classList.remove("musicaEscolhida");
+        setArea(333, 111);
+        if (rankingModal.style.display === 'flex') carregarRankingModal().catch(console.error);
+
+      })
+
+
+      jogarButton.addEventListener("click", () => {
+        if (musica) {
+          localStorage.setItem("musica", musica);
+          localStorage.setItem("modo", "jogar");
+          localStorage.setItem("modoMusica", modo);
+          window.location.href = "game.html";
+        } else {
+          alert("Selecione uma música!");
+        }
+      });
+
+      autoplayButton.addEventListener("click", () => {
+        if (musica) {
+          localStorage.setItem("musica", musica);
+          localStorage.setItem("modo", "autoplay");
+          localStorage.setItem("modoMusica", modo);
+          window.location.href = "game.html";
+        } else {
+          alert("Selecione uma música!");
+        }
+      });
+
+      function atualizarEstadoBotoesModo() {
+        if (modo === "aprendiz") {
+          botaoAprendiz.classList.add("ativo");
+          botaoJogador.classList.remove("ativo");
+        } else {
+          botaoJogador.classList.add("ativo");
+          botaoAprendiz.classList.remove("ativo");
+        }
+      }
+    });
+  </script>
+
+
+</head>
+
+<body>
+  <!-- MODAL DE RANKING — agora dentro do body, estrutura corrigida -->
+  <div id="rankingModal"
+    style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; align-items:center; justify-content:center;">
+    <div id="rankingModalBox">
+      <div id="rankingModalHeader">
+        <span id="rankingModalTitulo">🏆 Ranking</span>
+        <button id="rankingFecharBtn">✕</button>
+      </div>
+      <div id="rankingModalFiltros">
+        <span id="rankingModalMusica">—</span>
+        <span id="rankingModalModoAtual"></span>
+      </div>
+      <ol id="rankingModalLista"></ol>
+      <p id="rankingModalVazio">Nenhuma pontuação ainda para essa combinação.</p>
+    </div>
+  </div>
+  <div id="telaInicial" class="telaInicial">
+    <div id="titulo" style="margin-bottom: 20px;">
+      <h1 class="titulo">SELECIONE UMA MÚSICA</h1><br>
+    </div>
+<div id="buttons">
+      <button id="jinglebell">
+        <div>
+
+          <h1>Jingle Bell Rock</h1>
+          <h5>Bobby Helms</h5>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: flex-end; flex-direction: row; gap: 25px;">
+          <span>Fácil</span>
+          <a id="playJingleBell" href="https://www.youtube.com/watch?v=nIhs1T7OcZg" target="_blank">
+
+            <svg viewBox="0 0 100 100" width="25" height="25">
+              <path d="M30,25 Q30,15 38.43,20.37
+             L76.57,44.63
+             Q85,50 76.57,55.37
+             L38.43,79.63
+             Q30,85 30,75 Z" fill="currentColor"  />
+            </svg>
+
+          </a>
+        </div>
+      </button>
+    </div>
+    
+    <div id="buttons">
+      <button id="littlestar">
+        <div class="text">
+
+          <h1>Twinkle, Twinkle, Little Star</h1>
+          <h5>Artista desconhecido</h5>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: flex-end; flex-direction: row; gap: 25px;">
+          <span>Fácil</span>
+          <a id="playLittleStar" href="https://www.youtube.com/watch?v=SNeI2PMcRdA" target="_blank">
+            
+            <svg viewBox="0 0 100 100" width="25" height="25">
+              <path d="M30,25 Q30,15 38.43,20.37
+             L76.57,44.63
+             Q85,50 76.57,55.37
+             L38.43,79.63
+             Q30,85 30,75 Z" fill="currentColor" />
+            </svg>
+          </a>
+        </div>
+      </button>
+    </div>
+    
+    <div id="buttons">
+      <button id="bethoven">
+        <div class="text">
+          
+          <h1>Ode á Alegria</h1>
+          <h5>Beethoven</h5>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: flex-end; flex-direction: row; gap: 25px;">
+
+          <span>Médio</span>
+          <a id="playBethoven" href="https://www.youtube.com/watch?v=yIi72FRnZp8&pp=ygUNb2RlIGEgYWxlZ3JpYQ%3D%3D"
+            target="_blank">
+            <svg viewBox="0 0 100 100" width="25" height="25">
+              <path d="M30,25 Q30,15 38.43,20.37
+              L76.57,44.63
+              Q85,50 76.57,55.37
+              L38.43,79.63
+              Q30,85 30,75 Z" fill="currentColor" />
+            </svg>
+          </a>
+        </div>
+      </button>
+    </div>
+    <div id="buttons">
+      <button id="tchai">
+        <div class="text">
+          
+          <h1>Lago dos Cisnes</h1>
+          <h5>Tchaikovsky</h5>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: flex-end; flex-direction: row; gap: 25px;">
+
+          <span>Difícil</span>
+          <a id="playTchai" href="https://www.youtube.com/watch?v=ntuiP8uj5xo" target="_blank">
+            <svg viewBox="0 0 100 100" width="25" height="25">
+              <path d="M30,25 Q30,15 38.43,20.37
+             L76.57,44.63
+             Q85,50 76.57,55.37
+             L38.43,79.63
+             Q30,85 30,75 Z" fill="currentColor" />
+            </svg>
+          </a>
+        </div>
+      </button>
+    </div>
+    <div id="buttons">
+      <button id="elvis">
+         <div class="text">
+
+          <h1>Für Elise</h1>
+          <h5>Beethoven</h5>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: flex-end; flex-direction: row; gap: 25px;">
+          <span>Difícil</span>
+          <a id="playElvis" href="https://www.youtube.com/watch?v=wfF0zHeU3Zs" target="_blank">
+            <svg viewBox="0 0 100 100" width="25" height="25">
+              <path d="M30,25 Q30,15 38.43,20.37
+             L76.57,44.63
+             Q85,50 76.57,55.37
+             L38.43,79.63
+             Q30,85 30,75 Z" fill="currentColor" />
+            </svg>
+          </a>
+        </div>
+      </button>
+    </div>
+    <div class="textoIntermediarios">
+      
+      <h5>Modo de jogo</h5>
+      <div class="linha"></div>
+    </div>
+    <div id="modoContainer">
+      <button id="botaoAprendiz" class="botaoModo">
+        <h5 style="color: inherit;">Aprendiz </h5>
+         <span> para treinar</span>
+
+      </button>
+      <button id="botaoJogador" class="botaoModo">
+        <h5 style="color: inherit;">Jogador </h5>
+         <span>velocidade original</span>
+
+      </button>
+    </div>
+
+    <div id="pianoImg">
+      <div class="textoIntermediarios">
+
+        <h5>Área do piano que vai ser tocada</h5>
+        <div class="linha"></div>
+      </div>
+      <div style="position: relative; display: block; width: 100%;">
+        <div id="area"></div>
+        <img src="./assets/piano-completo-test.png"
+          style="display: block; width: 100%; height: auto; margin-top: 20px;" />
+      </div>
+    </div>
+    
+    <div id="inicialButtons">
+      <button id="rankingButton"> VER RANKING ATUAL </button>
+      <button id="jogarButton">JOGAR</button>
+      <button id="autoplayButton">AUTOPLAY</button>
+    </div>
+  </div>
+</body>
+
+</html>

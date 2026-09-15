@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #0B0912;
+            overflow: hidden;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #jogarButton,
+        #autoplayButton {
+            padding: 12px 40px;
+            color: #0e0e0e;
+            border-radius: 28px;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+            font-size: 1.1em;
+            font-weight: 400;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            font-family: 'Press Start 2P', monospace;
+
+        }
+
+        #jogarButton {
+            background-color: transparent;
+            z-index: 3000;
+            margin-top: 20px;
+            border: 2px solid #ffffff;
+            color: #ffffff;
+        }
+
+  
+
+        .container {
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+        }
+
+        #autoplayButton:hover,
+        #jogarButton:hover {
+            background-color: #34f7d6;
+        }
+
+ 
+    </style>
+</head>
+
+<body>
+
+
+    <div class="container">
+
+        <video width="80%" height="80%" controls autoplay loop muted>
+            <source src="video-demonstracao.mp4" type="video/mp4">
+        </video>
+        <button id="jogarButton" onclick="window.location.href='index.html'">VOLTAR</button>
+
+
+    </div>
+
+</body>
+
+</html>

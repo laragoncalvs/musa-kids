@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resultados</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #ffffff;
+      color: #000000;
+      margin: 20px;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      margin-bottom: 16px;
+    }
+
+    #filtros {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+      align-items: end;
+    }
+
+    #filtros label {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.8rem;
+      gap: 4px;
+    }
+
+    #filtros select,
+    #filtros input {
+      padding: 4px 6px;
+      font-size: 0.85rem;
+    }
+
+    #limparBtn,
+    #atualizarBtn {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    #contagem {
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 0.85rem;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #f0f0f0;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    tr:nth-child(even) {
+      background: #fafafa;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Resultados</h1>
+
+  <div id="filtros">
+    <label>
+      Música
+      <select id="filtroMusica">
+        <option value="">Todas</option>
+      </select>
+    </label>
+
+    <label>
+      Modo
+      <select id="filtroModo">
+        <option value="">Todos</option>
+      </select>
+    </label>
+
+    <label>
+      Dispositivo
+      <select id="filtroDispositivo">
+        <option value="">Todos</option>
+        <option value="true">Móvel</option>
+        <option value="false">Desktop</option>
+      </select>
+    </label>
+
+    <label>
+      Nome
+      <input type="text" id="filtroNome" placeholder="filtrar por nome" />
+    </label>
+
+    <label>
+      Device ID
+      <input type="text" id="filtroDeviceId" placeholder="filtrar por device_id" />
+    </label>
+
+    <button id="limparBtn">Limpar filtros</button>
+    <button id="atualizarBtn">Atualizar</button>
+  </div>
+
+  <div id="contagem"></div>
+
+  <table id="tabela">
+    <thead>
+      <tr>
+        <th data-key="data">Data</th>
+        <th data-key="nome">Nome</th>
+        <th data-key="device_id">Device ID</th>
+        <th data-key="musica">Música</th>
+        <th data-key="modo">Modo</th>
+        <th data-key="dispositivo_movel">Dispositivo</th>
+        <th data-key="pontuacao">Pontuação</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaBody"></tbody>
+  </table>
+
+  <script>
+    const SUPABASE_URL = 'https://jqfpexrinkycxobbmmyx.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZnBleHJpbmt5Y3hvYmJtbXl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4ODUzNjMsImV4cCI6MjA5MzQ2MTM2M30.pKgaVo1Gcr9LQcixVhwEHwv61pQOzGDsvyfpHCdGWwU';
+
+    const nomesMusicas = {
+      littlestar: 'Twinkle, Twinkle, Little Star',
+      jinglebell: 'Jingle Bells',
+      elvis: 'Für Elise',
+      bethoven: 'Ode à Alegria',
+      tchai: 'Lago dos Cisnes'
+    };
+    const nomesModos = { aprendiz: 'Aprendiz', jogador: 'Jogador' };
+
+    let todosDados = [];
+    let sortKey = 'data';
+    let sortDir = 'desc';
+
+    async function buscarDados() {
+      const url = new URL(`${SUPABASE_URL}/rest/v1/rankings`);
+      url.searchParams.append('select', '*');
+      url.searchParams.append('order', 'data.desc');
+
+      const res = await fetch(url.toString(), {
+        headers: {
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          apikey: SUPABASE_ANON_KEY
+        }
+      });
+
+      if (!res.ok) {
+        console.error('Erro ao buscar rankings:', res.status, res.statusText);
+        return [];
+      }
+      return await res.json();
+    }
+
+    function popularFiltros(rows) {
+      const musicas = [...new Set(rows.map(r => r.musica))].sort();
+      const modos = [...new Set(rows.map(r => r.modo))].sort();
+
+      const selMusica = document.getElementById('filtroMusica');
+      const selModo = document.getElementById('filtroModo');
+
+      // preserva seleção atual, se houver
+      const musicaAtual = selMusica.value;
+      const modoAtual = selModo.value;
+
+      selMusica.innerHTML = '<option value="">Todas</option>' +
+        musicas.map(m => `<option value="${m}">${nomesMusicas[m] || m}</option>`).join('');
+      selModo.innerHTML = '<option value="">Todos</option>' +
+        modos.map(m => `<option value="${m}">${nomesModos[m] || m}</option>`).join('');
+
+      selMusica.value = musicaAtual;
+      selModo.value = modoAtual;
+    }
+
+    function aplicarFiltros(rows) {
+      const musica = document.getElementById('filtroMusica').value;
+      const modo = document.getElementById('filtroModo').value;
+      const dispositivo = document.getElementById('filtroDispositivo').value;
+      const nome = document.getElementById('filtroNome').value.trim().toLowerCase();
+      const deviceId = document.getElementById('filtroDeviceId').value.trim().toLowerCase();
+
+      return rows.filter(r => {
+        if (musica && r.musica !== musica) return false;
+        if (modo && r.modo !== modo) return false;
+        if (dispositivo && String(r.dispositivo_movel) !== dispositivo) return false;
+        if (nome && !(r.nome || '').toLowerCase().includes(nome)) return false;
+        if (deviceId && !(r.device_id || '').toLowerCase().includes(deviceId)) return false;
+        return true;
+      });
+    }
+
+    function converterData(data) {
+      const [dia, mes, ano] = String(data || '').split('/');
+      if (!dia || !mes || !ano) return 0;
+      return Date.UTC(Number(ano), Number(mes) - 1, Number(dia));
+    }
+
+    function ordenar(rows) {
+      return [...rows].sort((a, b) => {
+        let va = a[sortKey];
+        let vb = b[sortKey];
+
+        if (sortKey === 'pontuacao') {
+          va = Number(va);
+          vb = Number(vb);
+        } else if (sortKey === 'data') {
+          va = converterData(va);
+          vb = converterData(vb);
+        } else if (sortKey === 'dispositivo_movel') {
+          va = va ? 1 : 0;
+          vb = vb ? 1 : 0;
+        } else {
+          va = (va ?? '').toString().toLowerCase();
+          vb = (vb ?? '').toString().toLowerCase();
+        }
+
+        if (va < vb) return sortDir === 'asc' ? -1 : 1;
+        if (va > vb) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    function renderTabela() {
+      const filtradas = ordenar(aplicarFiltros(todosDados));
+      const corpo = document.getElementById('tabelaBody');
+      corpo.innerHTML = '';
+
+      document.getElementById('contagem').textContent =
+        `${filtradas.length} de ${todosDados.length} registros`;
+
+      filtradas.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.data ?? ''}</td>
+          <td>${r.nome ?? ''}</td>
+          <td>${r.device_id ?? ''}</td>
+          <td>${nomesMusicas[r.musica] || r.musica || ''}</td>
+          <td>${nomesModos[r.modo] || r.modo || ''}</td>
+          <td>${r.dispositivo_movel ? 'Móvel' : 'Desktop'}</td>
+          <td>${r.pontuacao ?? ''}</td>
+        `;
+        corpo.appendChild(tr);
+      });
+    }
+
+    async function atualizar() {
+      todosDados = await buscarDados();
+      popularFiltros(todosDados);
+      renderTabela();
+    }
+
+    document.getElementById('filtroMusica').addEventListener('change', renderTabela);
+    document.getElementById('filtroModo').addEventListener('change', renderTabela);
+    document.getElementById('filtroDispositivo').addEventListener('change', renderTabela);
+    document.getElementById('filtroNome').addEventListener('input', renderTabela);
+    document.getElementById('filtroDeviceId').addEventListener('input', renderTabela);
+
+    document.getElementById('limparBtn').addEventListener('click', () => {
+      document.getElementById('filtroMusica').value = '';
+      document.getElementById('filtroModo').value = '';
+      document.getElementById('filtroDispositivo').value = '';
+      document.getElementById('filtroNome').value = '';
+      document.getElementById('filtroDeviceId').value = '';
+      renderTabela();
+    });
+
+    document.getElementById('atualizarBtn').addEventListener('click', atualizar);
+
+    document.querySelectorAll('#tabela th[data-key]').forEach(th => {
+      th.addEventListener('click', () => {
+        const chave = th.dataset.key;
+        if (sortKey === chave) {
+          sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortKey = chave;
+          sortDir = 'desc';
+        }
+        renderTabela();
+      });
+    });
+
+    atualizar();
+  </script>
+</body>
+
+</html>
