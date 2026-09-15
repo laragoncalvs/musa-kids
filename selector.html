@@ -780,18 +780,6 @@
         }
       }
 
-      rankingButton.addEventListener('click', () => {
-        rankingModal.style.display = 'flex';
-        carregarRankingModal().catch(console.error);
-      });
-
-      rankingFecharBtn.addEventListener('click', () => {
-        rankingModal.style.display = 'none';
-      });
-
-      rankingModal.addEventListener('click', (e) => {
-        if (e.target === rankingModal) rankingModal.style.display = 'none';
-      });
       const PIANO_W = 722; // largura original da imagem do piano
 
       function setArea(leftPx, widthPx) {
@@ -799,10 +787,6 @@
         area.style.width = (widthPx / PIANO_W * 100) + "%";
       }
 
-
-      // Atualiza o modal sempre que a música selecionada muda — adicione esta linha
-      // em cada listener de música, logo após o `musica = "..."`:
-      // carregarRankingModal(); (só tem efeito se o modal estiver aberto)
 
       // Recuperar modo do localStorage se existir
       const modoSalvo = localStorage.getItem("modoSelecionado");
@@ -827,8 +811,6 @@
         modo = "aprendiz";
         localStorage.setItem("modoSelecionado", "aprendiz");
         atualizarEstadoBotoesModo();
-        if (rankingModal.style.display === 'flex') carregarRankingModal().catch(console.error);
-
       });
 
       botaoJogador.addEventListener("click", () => {
@@ -848,8 +830,6 @@
         elvisMusic.classList.add("musicaEscolhida");
         jinglebellMusic.classList.remove("musicaEscolhida");
         setArea(250, 208);
-        if (rankingModal.style.display === 'flex') carregarRankingModal().catch(console.error);
-
       })
 
       bethovenMusic.addEventListener("click", () => {
@@ -860,8 +840,6 @@
         littlestarMusic.classList.remove("musicaEscolhida");
         jinglebellMusic.classList.remove("musicaEscolhida");
         setArea(208, 181);
-        if (rankingModal.style.display === 'flex') carregarRankingModal().catch(console.error);
-
       })
 
       tchaiMusic.addEventListener("click", () => {
@@ -872,8 +850,6 @@
         littlestarMusic.classList.remove("musicaEscolhida");
         jinglebellMusic.classList.remove("musicaEscolhida");
         setArea(360, 153);
-        if (rankingModal.style.display === 'flex') carregarRankingModal().catch(console.error);
-
       })
 
       littlestarMusic.addEventListener("click", () => {
@@ -884,8 +860,6 @@
         tchaiMusic.classList.remove("musicaEscolhida");
         jinglebellMusic.classList.remove("musicaEscolhida");
         setArea(180, 223);
-        if (rankingModal.style.display === 'flex') carregarRankingModal().catch(console.error);
-
       })
       jinglebellMusic.addEventListener("click", () => {
         musica = "jinglebell"
@@ -895,8 +869,6 @@
         tchaiMusic.classList.remove("musicaEscolhida");
         littlestarMusic.classList.remove("musicaEscolhida");
         setArea(333, 111);
-        if (rankingModal.style.display === 'flex') carregarRankingModal().catch(console.error);
-
       })
 
 
@@ -938,22 +910,6 @@
 </head>
 
 <body>
-  <!-- MODAL DE RANKING — agora dentro do body, estrutura corrigida -->
-  <div id="rankingModal"
-    style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; align-items:center; justify-content:center;">
-    <div id="rankingModalBox">
-      <div id="rankingModalHeader">
-        <span id="rankingModalTitulo">🏆 Ranking</span>
-        <button id="rankingFecharBtn">✕</button>
-      </div>
-      <div id="rankingModalFiltros">
-        <span id="rankingModalMusica">—</span>
-        <span id="rankingModalModoAtual"></span>
-      </div>
-      <ol id="rankingModalLista"></ol>
-      <p id="rankingModalVazio">Nenhuma pontuação ainda para essa combinação.</p>
-    </div>
-  </div>
   <div id="telaInicial" class="telaInicial">
     <div id="titulo" style="margin-bottom: 20px;">
       <h1 class="titulo">SELECIONE UMA MÚSICA</h1><br>
@@ -1013,7 +969,6 @@
     </div>
     
     <div id="inicialButtons">
-      <button id="rankingButton"> VER RANKING ATUAL </button>
       <button id="jogarButton">JOGAR</button>
       <button id="autoplayButton">AUTOPLAY</button>
     </div>

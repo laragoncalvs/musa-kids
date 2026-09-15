@@ -1,6 +1,5 @@
 import Soundfont from "soundfont-player";
 import * as THREE from "three";
-import { createClient } from "@supabase/supabase-js";
 import { keyMap } from "./keyMap.js";
 import { allCubes } from "./cubes.js";
 import { loadedTexturesAlt } from "./cubes.js";
@@ -476,9 +475,6 @@ function render() {
           if (modoAtual === "jogar") {
             pontuacaoFinal.style.display = "block";
             animarPontuacaoFinal();
-            setTimeout(() => {
-              verificarEAdicionarAoRanking().catch(console.error);
-            }, 2200);
           } else {
             pontuacaoFinal.style.display = "none";
           }
@@ -540,8 +536,6 @@ function resetarCena() {
   pauseStartTime = null;
   pausedTimeOffset = 0;
   fimTimeout = null;
-  const rankingEntry = document.getElementById("rankingEntry");
-  if (rankingEntry) rankingEntry.remove();
   const fimDiv = document.getElementById("fimDaCena");
   if (fimDiv) fimDiv.style.display = "none";
   const pianoGraphic = document.getElementById("pianoGraphic");
@@ -849,7 +843,7 @@ const jogarButton = document.getElementById("jogarButton");
 
 const nomesDasMusicas = {
   littlestar: "Twinkle, Twinkle, Little Star - Unknown artist",
-  jinglebell: "Jingle Bell Rock - Bobby Helms",
+  jinglebell: "Cai Cai Balão",
   elvis: "Beethoven - Für Elise",
   bethoven: "Bethoven - Ode á Alegria",
   tchai: "Tchaikovsky - Lago dos Cisnes",
@@ -989,63 +983,9 @@ function iniciarPartidaJogo() {
   }
 }
 
-function mostrarFormularioNomeJogador(callback) {
-  const modal = document.getElementById("nomeJogadorModal");
-  const input = document.getElementById("nomeJogadorInput");
-  const btn = document.getElementById("nomeJogadorConfirmarBtn");
-  if (!modal || !input || !btn) return callback();
-
-  if (animationId !== null) {
-    cancelAnimationFrame(animationId);
-    animationId = null;
-  }
-  resetarCena();
-
-  const nomeAtual = (localStorage.getItem("rankingNomeUsuario") || "").trim();
-  if (nomeAtual) {
-    localStorage.setItem("rankingNomeUsuario", nomeAtual.slice(0, MAX_USUARIO_LENGTH));
-    callback(nomeAtual);
-    return;
-  }
-
-  modal.style.display = "flex";
-  input.value = "";
-  input.style.borderColor = "";
-  input.focus();
-  input.select();
-
-  const confirmar = () => {
-    const nome = input.value.trim();
-    if (!nome) {
-      input.style.borderColor = "red";
-      return;
-    }
-    const nomeFormatado = nome.slice(0, MAX_USUARIO_LENGTH);
-    localStorage.setItem("rankingNomeUsuario", nomeFormatado);
-    modal.style.display = "none";
-    callback(nomeFormatado);
-  };
-
-  btn.onclick = confirmar;
-  input.onkeydown = (event) => {
-    if (event.key === "Enter") confirmar();
-  };
-}
-
 jogarButton.addEventListener("click", () => {
   if (modoAtual === "jogar") return;
-
-  const iniciar = () => {
-    iniciarPartidaJogo();
-  };
-
-  const nomeSalvo = (localStorage.getItem("rankingNomeUsuario") || "").trim();
-  if (!nomeSalvo) {
-    mostrarFormularioNomeJogador(iniciar);
-    return;
-  }
-
-  iniciar();
+  iniciarPartidaJogo();
 });
 
 resetar.addEventListener("click", () => {
@@ -1132,234 +1072,3 @@ function carregarPartituraJingleBell() {
   carregarNotas(jinglebell);
 }
 
-// ─── Ranking ─────────────────────────────────────────────────
-
-function obterIdentificadorUnico() {
-  let id = localStorage.getItem("deviceId");
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem("deviceId", id);
-  }
-  return id;
-}
-
-const MAX_USUARIO_LENGTH = 15;
-const MAX_RANKING = 10;
-const DATA_INICIAL_RANKING = "26/08/2026";
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error("[Supabase] Variáveis de ambiente faltando.");
-}
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-let rankingCache = null;
-
-function getRankingKey(musicaKey, modoMusica) {
-  return `${musicaKey}_jogar_${modoMusica}`;
-}
-
-function obterChaveData(data) {
-  const [dia, mes, ano] = String(data || "").split("/");
-  if (!dia || !mes || !ano) return "";
-  return `${ano}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
-}
-
-async function carregarRankingGlobal() {
-  if (rankingCache) return rankingCache;
-  try {
-    const { data, error } = await supabase.from("rankings").select("*");
-    if (error) {
-      console.error("Erro ao carregar ranking:", error);
-      return {};
-    }
-    rankingCache = {};
-    const dataMinima = obterChaveData(DATA_INICIAL_RANKING);
-    if (data) {
-      data.forEach((row) => {
-        if (obterChaveData(row.data) < dataMinima) return;
-        const key = getRankingKey(row.musica, row.modo);
-        if (!rankingCache[key]) rankingCache[key] = [];
-        rankingCache[key].push({
-          id: row.id,
-          nome: row.nome,
-          pontuacao: row.pontuacao,
-          data: row.data,
-          dispositivo_movel: row.dispositivo_movel ?? false,
-          device_id: row.device_id ?? null, // ← novo
-        });
-      });
-      Object.keys(rankingCache).forEach((key) => {
-        rankingCache[key].sort((a, b) => b.pontuacao - a.pontuacao);
-      });
-    }
-    return rankingCache;
-  } catch (err) {
-    console.error(err);
-    return {};
-  }
-}
-
-
-async function salvarRankingGlobal(dados) {
-  rankingCache = dados;
-  try {
-    const registros = [];
-    Object.entries(dados).forEach(([key, lista]) => {
-      const [mus, , modo] = key.split("_");
-      lista.forEach((item) => {
-        const r = {
-          musica: mus,
-          modo,
-          nome: item.nome,
-          pontuacao: item.pontuacao,
-          data: item.data,
-          dispositivo_movel: item.dispositivo_movel ?? false,
-          device_id: item.device_id ?? null, // ← novo
-        };
-        if (item.id != null) r.id = item.id;
-        registros.push(r);
-      });
-    });
-    const inserir = registros.filter((r) => r.id == null);
-    const atualizar = registros.filter((r) => r.id != null);
-    if (atualizar.length)
-      await supabase.from("rankings").upsert(atualizar, { onConflict: ["id"] });
-    if (inserir.length) await supabase.from("rankings").insert(inserir);
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-async function carregarRanking(musicaKey, modoMusica) {
-  const dados = await carregarRankingGlobal();
-  return dados[getRankingKey(musicaKey, modoMusica)] || [];
-}
-
-async function inserirNoRanking(nome, pontuacaoAtual, musicaKey, modoMusica) {
-  const nomeTrimmed = (nome || "").trim().slice(0, MAX_USUARIO_LENGTH);
-  if (!nomeTrimmed) return null;
-
-  const dados = await carregarRankingGlobal();
-  const key = getRankingKey(musicaKey, modoMusica);
-  const lista = dados[key] || [];
-  const nomeLower = nomeTrimmed.toLowerCase();
-  const deviceId = obterIdentificadorUnico();
-
-  const novaEntrada = {
-    nome: nomeTrimmed,
-    pontuacao: Math.floor(pontuacaoAtual),
-    data: new Date().toLocaleDateString("pt-BR"),
-    dispositivo_movel: isMobile,
-    device_id: deviceId,
-    // sem id → sempre insert como nova tentativa
-  };
-
-  lista.push(novaEntrada); // ← sempre adiciona, sem verificar duplicata por nome
-  lista.sort((a, b) => b.pontuacao - a.pontuacao);
-  dados[key] = lista;
-  rankingCache = dados;
-
-  await salvarRankingGlobal(dados);
-
-  // Recarrega do banco para pegar o id real gerado
-  rankingCache = null;
-  const listaAtualizada = await carregarRanking(musicaKey, modoMusica);
-
-  return (
-    listaAtualizada.findIndex((e) => e.nome.toLowerCase() === nomeLower) + 1
-  );
-}
-async function exibirListaRanking(nomeDestaque, listaJaCarregada = null) {
-  const listaFull = listaJaCarregada || [];
-  const listaDiv = document.getElementById("rankingLista");
-  if (!listaDiv) return;
-  if (listaFull.length === 0) {
-    listaDiv.innerHTML =
-      '<p style="color:rgba(255,255,255,0.3);font-size:0.5rem;text-align:center;">Nenhuma pontuação ainda.</p>';
-    return;
-  }
-  // Only show the top MAX_RANKING entries in the UI
-  const lista = listaFull.slice(0, MAX_RANKING);
-  let html = '<ol id="rankingOl">';
-  lista.forEach((entry, i) => {
-    const destaque =
-      entry.nome.toLowerCase() === nomeDestaque.toLowerCase()
-        ? " ranking-destaque"
-        : "";
-    html += `<li class="ranking-item${destaque}">
-            <span class="ranking-pos">${i + 1}º</span>
-            <span class="ranking-nome">${entry.nome}</span>
-            <span class="ranking-pts">${entry.pontuacao}</span>
-            <span class="ranking-data">${entry.data}</span>
-        </li>`;
-  });
-  html += "</ol>";
-  listaDiv.innerHTML = html;
-}
-
-function criarContainerRanking(msgHtml, incluirFormulario) {
-  if (document.getElementById("rankingEntry")) return false;
-  const fimDiv = document.getElementById("fimDaCena");
-  const botoesDiv = document.getElementById("fimDaCena-buttons");
-  if (!fimDiv || !botoesDiv) return false;
-  const rankingDiv = document.createElement("div");
-  rankingDiv.id = "rankingEntry";
-  rankingDiv.innerHTML = `
-        <p id="rankingMsg">${msgHtml}</p>
-        ${
-          incluirFormulario
-            ? `<div id="rankingInputWrapper">
-            <input type="text" id="rankingNomeInput" maxlength="${MAX_USUARIO_LENGTH}"
-                placeholder="Seu nome" autocomplete="off" />
-            <button id="rankingConfirmarBtn">Confirmar</button>
-        </div>`
-            : ""
-        }
-        <div id="rankingLista"><p style="color:rgba(255,255,255,0.3);font-size:0.5rem;text-align:center;">Carregando...</p></div>
-    `;
-  fimDiv.insertBefore(rankingDiv, botoesDiv);
-  return true;
-}
-
-function exibirFormularioRanking(posicao, nomePreenchido = null) {
-  if (!criarContainerRanking("", false)) return;
-
-  const modo = localStorage.getItem("modoMusica") || "jogador";
-  carregarRanking(musica, modo)
-    .then((listaNova) => exibirListaRanking(nomePreenchido || "", listaNova))
-    .catch(console.error);
-}
-
-async function verificarEAdicionarAoRanking() {
-  if (modoAtual !== "jogar") return;
-  const pontuacaoAtual = Math.floor(pontuation);
-  if (pontuacaoAtual <= 0) return;
-
-  const nome = (localStorage.getItem("rankingNomeUsuario") || "").trim();
-  if (!nome) return;
-
-  rankingCache = null;
-  const modo = localStorage.getItem("modoMusica") || "jogador";
-  try {
-    const lista = await carregarRanking(musica, modo);
-    const cabe =
-      lista.length < MAX_RANKING ||
-      pontuacaoAtual > lista[lista.length - 1].pontuacao;
-
-    if (!cabe) {
-      rankingCache = null;
-      return;
-    }
-
-    const pos = await inserirNoRanking(nome, pontuacaoAtual, musica, modo);
-    const listaNova = await carregarRanking(musica, modo);
-    exibirFormularioRanking(pos, nome);
-    await exibirListaRanking(nome, listaNova);
-    rankingCache = null;
-  } catch (err) {
-    console.error(err);
-  }
-}
