@@ -690,102 +690,13 @@
       const jogarButton = document.getElementById("jogarButton");
       const autoplayButton = document.getElementById("autoplayButton");
 
-      const rankingButton = document.getElementById('rankingButton');
-      const rankingModal = document.getElementById('rankingModal');
-      const rankingFecharBtn = document.getElementById('rankingFecharBtn');
-      const rankingModalLista = document.getElementById('rankingModalLista');
-      const rankingModalVazio = document.getElementById('rankingModalVazio');
-      const rankingModalMusica = document.getElementById('rankingModalMusica');
-      let rankingModoAtivo = 'jogador'; // valor inicial
-      const nomesMusicas = {
-        "littlestar": "Twinkle, Twinkle, Little Star",
-        "jinglebell": "Jingle Bells",
-        "elvis": "Beethoven - Für Elise",
-        "bethoven": "Bethoven - Ode á Alegria",
-        "tchai": "Tchaikovsky - Lago dos Cisnes"
-      };
-
-      // Credenciais Supabase
-      const SUPABASE_URL = 'https://jqfpexrinkycxobbmmyx.supabase.co';
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZnBleHJpbmt5Y3hvYmJtbXl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4ODUzNjMsImV4cCI6MjA5MzQ2MTM2M30.pKgaVo1Gcr9LQcixVhwEHwv61pQOzGDsvyfpHCdGWwU';
-
-      async function carregarRankingModal() {
-        rankingModalLista.innerHTML = '';
-        rankingModalVazio.style.display = 'none';
-        rankingModalLista.style.display = 'block';
-        rankingModalLista.innerHTML = '<li style="color:rgba(255,255,255,0.3);font-size:0.45rem;list-style:none;text-align:center;padding:16px 0;">Carregando...</li>';
-
-        let lista = [];
-        try {
-          const url = new URL(`${SUPABASE_URL}/rest/v1/rankings`);
-          url.searchParams.append('musica', `eq.${musica}`);
-          url.searchParams.append('modo', `eq.${modo}`);
-          url.searchParams.append('order', 'pontuacao.desc');
-
-          const response = await fetch(url.toString(), {
-            headers: {
-              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-              'apikey': SUPABASE_ANON_KEY
-            }
-          });
-
-          if (!response.ok) {
-            const erroTexto = await response.text().catch(() => 'sem corpo de erro');
-            console.error('Erro ao carregar ranking:', response.status, response.statusText, erroTexto);
-            lista = [];
-          } else {
-            lista = await response.json();
-          }
-        } catch (err) {
-          console.error('Erro ao carregar ranking modal:', err);
-          lista = [];
-        }
-
-        const [diaMinimo, mesMinimo, anoMinimo] = '26/08/2026'.split('/');
-        const dataMinima = new Date(Number(anoMinimo), Number(mesMinimo) - 1, Number(diaMinimo));
-        lista = lista.filter((entry) => {
-          const [dia, mes, ano] = String(entry.data || '').split('/');
-          if (!dia || !mes || !ano) return false;
-          const dataEntrada = new Date(Number(ano), Number(mes) - 1, Number(dia));
-          return dataEntrada >= dataMinima;
-        });
-
-        rankingModalMusica.textContent = nomesMusicas[musica] || musica;
-        document.getElementById('rankingModalModoAtual').textContent =
-          modo === 'aprendiz' ? 'Aprendiz' : 'Jogador';
-
-        rankingModalLista.innerHTML = '';
-
-        if (lista.length === 0) {
-          rankingModalVazio.style.display = 'block';
-          rankingModalLista.style.display = 'none';
-        } else {
-          rankingModalVazio.style.display = 'none';
-          rankingModalLista.style.display = 'block';
-          lista.forEach((entry, i) => {
-            if (i >= 10) return;
-
-              const li = document.createElement('li');
-              const medalha = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}º`;
-              li.innerHTML = `
-              <span class="rm-pos">${medalha}</span>
-              <span class="rm-nome">${entry.nome}</span>
-              <span class="rm-pts">${entry.pontuacao}</span>
-              <span class="rm-data">${entry.data}</span>
-              `;
-              rankingModalLista.appendChild(li);
-            
-            
-          });
-        }
-      }
-
-      const PIANO_W = 722; // largura original da imagem do piano
+      const PIANO_W = 722;
 
       function setArea(leftPx, widthPx) {
         area.style.left = (leftPx / PIANO_W * 100) + "%";
         area.style.width = (widthPx / PIANO_W * 100) + "%";
       }
+
 
 
       // Recuperar modo do localStorage se existir
@@ -798,10 +709,9 @@
       atualizarEstadoBotoesModo();
 
       musica = "jinglebell";
-      littlestarMusic.classList.remove("musicaEscolhida");
-      elvisMusic.classList.remove("musicaEscolhida");
-      bethovenMusic.classList.remove("musicaEscolhida");
-      tchaiMusic.classList.remove("musicaEscolhida");
+      [littlestarMusic, elvisMusic, bethovenMusic, tchaiMusic]
+        .filter((element) => element.isConnected)
+        .forEach((element) => element.classList.remove("musicaEscolhida"));
       jinglebellMusic.classList.add("musicaEscolhida");
 
       setArea(333, 111);
@@ -817,8 +727,6 @@
         modo = "jogador";
         localStorage.setItem("modoSelecionado", "jogador");
         atualizarEstadoBotoesModo();
-        if (rankingModal.style.display === 'flex') carregarRankingModal().catch(console.error);
-
       });
 
       // Event listeners para seleção de música
