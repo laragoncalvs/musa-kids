@@ -673,11 +673,12 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       // Referencias aos elementos de música
-      const littlestarMusic = document.getElementById("littlestar");
-      const elvisMusic = document.getElementById("elvis");
-      const bethovenMusic = document.getElementById("bethoven");
-      const tchaiMusic = document.getElementById("tchai");
-      const jinglebellMusic = document.getElementById("jinglebell");
+      const obterMusica = (id) => document.getElementById(id) || document.createElement("button");
+      const littlestarMusic = obterMusica("littlestar");
+      const elvisMusic = obterMusica("elvis");
+      const bethovenMusic = obterMusica("bethoven");
+      const tchaiMusic = obterMusica("tchai");
+      const jinglebellMusic = obterMusica("jinglebell");
 
       const area = document.getElementById("area");
 
@@ -961,8 +962,7 @@
       <button id="jinglebell">
         <div>
 
-          <h1>Jingle Bell Rock</h1>
-          <h5>Bobby Helms</h5>
+          <h1>Cai Cai Balão</h1>
         </div>
         <div style="display: flex; align-items: center; justify-content: flex-end; flex-direction: row; gap: 25px;">
           <span>Fácil</span>
@@ -981,95 +981,6 @@
       </button>
     </div>
     
-    <div id="buttons">
-      <button id="littlestar">
-        <div class="text">
-
-          <h1>Twinkle, Twinkle, Little Star</h1>
-          <h5>Artista desconhecido</h5>
-        </div>
-        <div style="display: flex; align-items: center; justify-content: flex-end; flex-direction: row; gap: 25px;">
-          <span>Fácil</span>
-          <a id="playLittleStar" href="https://www.youtube.com/watch?v=SNeI2PMcRdA" target="_blank">
-            
-            <svg viewBox="0 0 100 100" width="25" height="25">
-              <path d="M30,25 Q30,15 38.43,20.37
-             L76.57,44.63
-             Q85,50 76.57,55.37
-             L38.43,79.63
-             Q30,85 30,75 Z" fill="currentColor" />
-            </svg>
-          </a>
-        </div>
-      </button>
-    </div>
-    
-    <div id="buttons">
-      <button id="bethoven">
-        <div class="text">
-          
-          <h1>Ode á Alegria</h1>
-          <h5>Beethoven</h5>
-        </div>
-        <div style="display: flex; align-items: center; justify-content: flex-end; flex-direction: row; gap: 25px;">
-
-          <span>Médio</span>
-          <a id="playBethoven" href="https://www.youtube.com/watch?v=yIi72FRnZp8&pp=ygUNb2RlIGEgYWxlZ3JpYQ%3D%3D"
-            target="_blank">
-            <svg viewBox="0 0 100 100" width="25" height="25">
-              <path d="M30,25 Q30,15 38.43,20.37
-              L76.57,44.63
-              Q85,50 76.57,55.37
-              L38.43,79.63
-              Q30,85 30,75 Z" fill="currentColor" />
-            </svg>
-          </a>
-        </div>
-      </button>
-    </div>
-    <div id="buttons">
-      <button id="tchai">
-        <div class="text">
-          
-          <h1>Lago dos Cisnes</h1>
-          <h5>Tchaikovsky</h5>
-        </div>
-        <div style="display: flex; align-items: center; justify-content: flex-end; flex-direction: row; gap: 25px;">
-
-          <span>Difícil</span>
-          <a id="playTchai" href="https://www.youtube.com/watch?v=ntuiP8uj5xo" target="_blank">
-            <svg viewBox="0 0 100 100" width="25" height="25">
-              <path d="M30,25 Q30,15 38.43,20.37
-             L76.57,44.63
-             Q85,50 76.57,55.37
-             L38.43,79.63
-             Q30,85 30,75 Z" fill="currentColor" />
-            </svg>
-          </a>
-        </div>
-      </button>
-    </div>
-    <div id="buttons">
-      <button id="elvis">
-         <div class="text">
-
-          <h1>Für Elise</h1>
-          <h5>Beethoven</h5>
-        </div>
-        <div style="display: flex; align-items: center; justify-content: flex-end; flex-direction: row; gap: 25px;">
-          <span>Difícil</span>
-          <a id="playElvis" href="https://www.youtube.com/watch?v=wfF0zHeU3Zs" target="_blank">
-            <svg viewBox="0 0 100 100" width="25" height="25">
-              <path d="M30,25 Q30,15 38.43,20.37
-             L76.57,44.63
-             Q85,50 76.57,55.37
-             L38.43,79.63
-             Q30,85 30,75 Z" fill="currentColor" />
-            </svg>
-          </a>
-        </div>
-      </button>
-    </div>
     <div class="textoIntermediarios">
       
       <h5>Modo de jogo</h5>

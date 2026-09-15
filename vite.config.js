@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
-  base: '/musa-kids/',
+  base: process.env.NODE_ENV === 'production' ? '/musa-kids/' : '/',
   build: {
     rollupOptions: {
       input: {
