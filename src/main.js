@@ -1,13 +1,24 @@
 import Soundfont from "soundfont-player";
 import * as THREE from "three";
-import { keyMap } from "./keyMap.js";
+import {
+  DEFAULT_OCTAVE,
+  buildKeyMap,
+  normalizePitchOctave,
+} from "./keyMap.js";
 import { allCubes } from "./cubes.js";
 import { loadedTexturesAlt } from "./cubes.js";
-import notasJson from "./partituras/furelise.json";
-import lagoJson from "./partituras/lago.json";
-import littlestar from "./partituras/littlestar.json";
-import jinglebell from "./partituras/jinglebell.json";
-import odeToJoy from "./partituras/ode.json";
+
+const partiturasDisponiveis = Object.fromEntries(
+  Object.entries(import.meta.glob("./partituras/*.json", { eager: true })).map(
+    ([path, mod]) => [path.replace("./partituras/", "").replace(".json", ""), mod.default ?? mod],
+  ),
+);
+
+const notasJson = partiturasDisponiveis.furelise ?? [];
+const lagoJson = partiturasDisponiveis.lago ?? [];
+const littlestar = partiturasDisponiveis.littlestar ?? [];
+const jinglebell = partiturasDisponiveis.jinglebell ?? [];
+const odeToJoy = partiturasDisponiveis.ode ?? [];
 
 let audioContext = null;
 function getAudioContext() {
@@ -17,12 +28,30 @@ function getAudioContext() {
   return audioContext;
 }
 const pitchToKey = {};
+const OCTAVE_SEQUENCE = [4, 2, 7];
+const TEMPO_SEQUENCE = [
+  { label: "padrão", multiplier: 1.5 },
+  { label: "devagar", multiplier: 2.2 },
+  { label: "rápido", multiplier: 0.8 },
+];
+const FASE_JOGO = localStorage.getItem("faseJogo") === "andamento"
+  ? "andamento"
+  : "oitavas";
+const MAX_TENTATIVAS_POR_ETAPA = 5;
+const META_PONTUACAO = 800;
+let octaveAtual = FASE_JOGO === "andamento"
+  ? OCTAVE_SEQUENCE[0]
+  : Number(localStorage.getItem("octave") || OCTAVE_SEQUENCE[0]);
+let activeKeyMap = buildKeyMap(octaveAtual);
+let tentativasPorEtapa = [0, 0, 0];
+let faseEtapaIndex = 0;
+let fatorTempoPartitura = 1;
+let faseEmAndamento = false;
 
 let piano = null;
 let pianoLoaded = false;
+let pianoLoadingPromise = null;
 let modoAtual = null;
-let modoMusica = null;
-let multiplicadorTempo = 1;
 let teclaListener = null;
 let animationId = null;
 let startTime = null;
@@ -37,7 +66,7 @@ let pontosParaAcerto = 0;
 const PONTUACAO_MAXIMA = 1000;
 let duracaoTotal = 0;
 const pianoSvgKeys = {};
-
+criarPianoGrafico();
 function normalizePitch(pitch) {
   if (!pitch) return pitch;
   if (pitch.startsWith("B#")) {
@@ -73,13 +102,18 @@ function normalizeKeyForMap(key) {
 }
 const colisoes = [];
 
-for (const [key, pitch] of Object.entries(keyMap)) {
-  const norm = normalizePitch(pitch); // mesma função do projeto
-  if (pitchToKey[norm] !== undefined) {
-    colisoes.push({ pitch: norm, teclas: [pitchToKey[norm], key] });
+function rebuildPitchToKey() {
+  Object.keys(pitchToKey).forEach((pitch) => delete pitchToKey[pitch]);
+  for (const [key, pitch] of Object.entries(activeKeyMap)) {
+    const norm = normalizePitch(pitch);
+    if (pitchToKey[norm] !== undefined) {
+      colisoes.push({ pitch: norm, teclas: [pitchToKey[norm], key] });
+    }
+    pitchToKey[norm] = key;
   }
-  pitchToKey[norm] = key;
 }
+
+rebuildPitchToKey();
 
 console.log(colisoes);
 function highlightPianoKey(pitch) {
@@ -175,7 +209,7 @@ const isMobile =
   /Mobi|Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
     navigator.userAgent,
   );
-const PIANO_HEIGHT = isMobile ? 0 : 170;
+const PIANO_HEIGHT = isMobile || FASE_JOGO === "andamento" ? 0 : 170;
 if (isMobile) {
   camera.position.set(0, 7.5, 4);
   camera.fov = 90;
@@ -197,10 +231,9 @@ if (gameArea) {
   document.body.appendChild(renderer.domElement);
 }
 
-criarPianoGrafico();
 
 const scaleMultiplier = isMobile ? 0.45 : 1;
-const planeGeometry2 = new THREE.PlaneGeometry(13.5 * scaleMultiplier, 2);
+const planeGeometry2 = new THREE.PlaneGeometry(10 * scaleMultiplier, 2);
 const planeMaterial2 = new THREE.MeshStandardMaterial({
   color: 0xe323ca,
   side: THREE.DoubleSide,
@@ -222,13 +255,13 @@ const lineMaterial = new THREE.MeshStandardMaterial({
   depthWrite: false,
 });
 const lines = Array.from(
-  { length: 13 },
+  { length: 8 },
   (_, i) => new THREE.Mesh(lineGeometry, lineMaterial),
 );
 lines.forEach((line, i) => {
   line.rotation.x = -Math.PI / 2;
   line.position.x =
-    [0, 1.1, -1.1, 2.2, -2.2, 3.3, -3.3, 4.4, -4.4, 5.5, -5.5, 6.7, -6.7][i] *
+    [ 0.7, -0.7, 2, -2, 3.5, -3.5, 5, -5][i] *
     scaleMultiplier;
   line.position.z = -2.5;
   scene.add(line);
@@ -261,17 +294,10 @@ window.addEventListener("resize", () => {
 
 const activeCubes = [];
 const spawnEvents = [];
-const VELOCIDADE_CUBO = 0.1;
+const VELOCIDADE_CUBO = 0.08;
 
 function addCubeToScene(letter, delay, speed) {
   spawnEvents.push({ letter, delay, speed, spawned: false });
-}
-
-function aplicarMultiplicadorTempo() {
-  spawnEvents.forEach((event) => {
-    event.delay *= multiplicadorTempo;
-    event.speed /= multiplicadorTempo;
-  });
 }
 
 function spawnCube(letter, speed) {
@@ -297,7 +323,7 @@ function spawnCube(letter, speed) {
 
 function processarTecla(key) {
   const normalizedKey = normalizeKeyForMap(key);
-  const note = keyMap[normalizedKey];
+  const note = activeKeyMap[normalizedKey];
   if (!note) return;
   highlightPianoKey(note);
   const ctx = getAudioContext();
@@ -313,7 +339,7 @@ function processarTecla(key) {
 
   for (let i = 0; i < activeCubes.length; i++) {
     const cube = activeCubes[i];
-    const cubeNote = keyMap[cube.userData.letter];
+    const cubeNote = activeKeyMap[cube.userData.letter];
     const near = Math.abs(cube.position.z - plane2.position.z) < 1;
     if (!cube.userData.hit && cubeNote === note && near) {
       const distancia = Math.abs(cube.position.z - plane2.position.z);
@@ -359,7 +385,7 @@ function processarTecla(key) {
     let menorDistancia = Infinity;
     for (let i = 0; i < activeCubes.length; i++) {
       const cube = activeCubes[i];
-      if (!cube.userData.hit && keyMap[cube.userData.letter] === note) {
+      if (!cube.userData.hit && activeKeyMap[cube.userData.letter] === note) {
         const distancia = Math.abs(cube.position.z - plane2.position.z);
         if (distancia < menorDistancia) {
           menorDistancia = distancia;
@@ -402,39 +428,6 @@ function render() {
     const zAlvo = plane2.position.z;
     const offset = 0.8;
 
-    if (!cube.userData.hit && cube.position.z >= zAlvo - offset) {
-      if (modoAtual === "autoplay") {
-        cube.userData.hit = true;
-        const letra = cube.userData.letter;
-        if (Array.isArray(cube.material)) {
-          cube.material.forEach((mat, idx) => {
-            if (mat instanceof THREE.MeshStandardMaterial && mat.color) {
-              mat.color.set(0x51b79f);
-            }
-            if (idx === 2 && mat instanceof THREE.MeshBasicMaterial) {
-              const novaTextura = loadedTexturesAlt[letra];
-              if (novaTextura) {
-                mat.map = novaTextura;
-                mat.needsUpdate = true;
-              } else {
-                console.warn(
-                  `Textura alternativa não encontrada para: ${letra}`,
-                );
-              }
-            }
-          });
-        }
-        const note = keyMap[cube.userData.letter];
-        if (note) highlightPianoKey(note);
-        if (piano && note) piano.play(note);
-        setTimeout(() => {
-          if (scene.children.includes(cube)) scene.remove(cube);
-          const index = activeCubes.indexOf(cube);
-          if (index !== -1) activeCubes.splice(index, 1);
-        }, 400);
-      }
-    }
-
     if (
       modoAtual === "jogar" &&
       !cube.userData.hit &&
@@ -455,8 +448,23 @@ function render() {
   if (activeCubes.length === 0 && spawnEvents.every((e) => e.spawned)) {
     if (!fimTimeout) {
       fimTimeout = setTimeout(() => {
-        desabilitarTeclado();
+        const fasePassou = pontuation > META_PONTUACAO;
+        const atingiuLimite = tentativasPorEtapa[faseEtapaIndex] >= MAX_TENTATIVAS_POR_ETAPA;
 
+        if (faseEmAndamento && !fasePassou && !atingiuLimite) {
+          finalizarFaseAtual();
+          return;
+        }
+
+        const quantidadeEtapas = FASE_JOGO === "oitavas"
+          ? OCTAVE_SEQUENCE.length
+          : TEMPO_SEQUENCE.length;
+        if (faseEmAndamento && fasePassou && faseEtapaIndex < quantidadeEtapas - 1) {
+          finalizarFaseAtual();
+          return;
+        }
+
+        desabilitarTeclado();
         cancelAnimationFrame(animationId);
         animationId = null;
         const canvas = renderer.domElement;
@@ -466,20 +474,15 @@ function render() {
         if (fimDiv) {
           fimDiv.style.display = "flex";
           atualizarEstrelas();
-          // esconder elementos de cena que podem aparecer atrás do overlay
           if (typeof plane2 !== "undefined" && plane2) plane2.visible = false;
           if (typeof lines !== "undefined" && Array.isArray(lines))
             lines.forEach((l) => (l.visible = false));
           const pianoGraphic = document.getElementById("pianoGraphic");
           if (pianoGraphic) pianoGraphic.style.display = "none";
-          if (modoAtual === "jogar") {
-            pontuacaoFinal.style.display = "block";
-            animarPontuacaoFinal();
-          } else {
-            pontuacaoFinal.style.display = "none";
-          }
+          pontuacaoFinal.style.display = "block";
+          animarPontuacaoFinal();
         }
-        document.getElementById("botoesMusica").style.display = "none";
+        abrirPosTeste();
         document.getElementById("pontuacaoContainer").style.display = "none";
         document.getElementById("pontuacaoTitle").style.display = "none";
         document.getElementById("pontuacao").style.display = "none";
@@ -515,7 +518,7 @@ window.addEventListener("visibilitychange", () => {
   if (
     animationId === null &&
     startTime !== null &&
-    (modoAtual === "autoplay" || modoAtual === "jogar")
+    modoAtual === "jogar"
   ) {
     render();
   }
@@ -539,7 +542,116 @@ function resetarCena() {
   const fimDiv = document.getElementById("fimDaCena");
   if (fimDiv) fimDiv.style.display = "none";
   const pianoGraphic = document.getElementById("pianoGraphic");
-  if (pianoGraphic) pianoGraphic.style.display = "flex";
+  if (pianoGraphic) {
+    pianoGraphic.style.display = FASE_JOGO === "andamento" ? "none" : "flex";
+  }
+}
+
+function atualizarEstadoFase() {
+  const nome = obterNomeDaMusica(musica);
+  const elemento = document.getElementById("nomeDaMusica");
+  if (elemento) {
+    const etapa = FASE_JOGO === "oitavas"
+      ? `${octaveAtual}ª oitava`
+      : `Andamento ${TEMPO_SEQUENCE[faseEtapaIndex].label}`;
+    elemento.textContent = `${nome} • ${etapa}`;
+  }
+}
+
+function iniciarFaseAtual() {
+  faseEmAndamento = true;
+  if (FASE_JOGO === "oitavas") {
+    octaveAtual = OCTAVE_SEQUENCE[faseEtapaIndex];
+    fatorTempoPartitura = 1;
+  } else {
+    octaveAtual = OCTAVE_SEQUENCE[0];
+    fatorTempoPartitura = TEMPO_SEQUENCE[faseEtapaIndex].multiplier;
+  }
+  activeKeyMap = buildKeyMap(octaveAtual);
+  localStorage.setItem("octave", String(octaveAtual));
+  rebuildPitchToKey();
+  criarPianoGrafico();
+  resetarCena();
+  carregarPartituraAtual();
+  atualizarEstadoFase();
+
+  startTime = performance.now();
+  pauseStartTime = null;
+  pausedTimeOffset = 0;
+  fimTimeout = null;
+
+  if (animationId !== null) cancelAnimationFrame(animationId);
+  animationId = null;
+
+  if (!pianoLoaded) {
+    Soundfont.instrument(getAudioContext(), "acoustic_grand_piano", {
+      gain: 1.5,
+    }).then((loadedPiano) => {
+      piano = loadedPiano;
+      pianoLoaded = true;
+      render();
+    });
+    return;
+  }
+
+  render();
+}
+
+function mostrarAvisoEtapa(index, aoFechar) {
+  const modal = document.getElementById("avisoOitavaModal");
+  const conteudo = document.getElementById("avisoOitavaConteudo");
+  const mensagensOitavas = {
+    2: "Agora vamos para a 2ª oitava. Ela é mais grave.",
+    4: "Vamos começar pela 4ª oitava. Ela fica bem no centro do piano.",
+    7: "Agora vamos para a 7ª oitava. Ela é mais aguda.",
+  };
+  const mensagensAndamento = [
+    "Vamos começar no andamento padrão.",
+    "Agora vamos tocar mais devagar.",
+    "Agora vamos tocar mais rápido.",
+  ];
+
+  if (!modal || !conteudo) {
+    aoFechar();
+    return;
+  }
+
+  conteudo.textContent = FASE_JOGO === "oitavas"
+    ? mensagensOitavas[OCTAVE_SEQUENCE[index]]
+    : mensagensAndamento[index];
+  modal.style.display = "flex";
+  window.setTimeout(() => {
+    modal.style.display = "none";
+    aoFechar();
+  }, 2200);
+}
+
+function finalizarFaseAtual() {
+  const tentativasAtuais = tentativasPorEtapa[faseEtapaIndex] + 1;
+  tentativasPorEtapa[faseEtapaIndex] = tentativasAtuais;
+  const quantidadeEtapas = FASE_JOGO === "oitavas"
+    ? OCTAVE_SEQUENCE.length
+    : TEMPO_SEQUENCE.length;
+
+  if (pontuation > META_PONTUACAO) {
+    if (faseEtapaIndex < quantidadeEtapas - 1) {
+      faseEtapaIndex += 1;
+      mostrarAvisoEtapa(faseEtapaIndex, iniciarFaseAtual);
+      return;
+    }
+
+    faseEmAndamento = false;
+    return;
+  }
+
+  if (tentativasAtuais >= MAX_TENTATIVAS_POR_ETAPA) {
+    faseEmAndamento = false;
+    return;
+  }
+
+  setTimeout(() => {
+    iniciarFaseAtual();
+  }, 1200);
 }
 
 // ─── PIANO VIRTUAL — mobile, sem KeyboardEvent sintético ───
@@ -656,6 +768,11 @@ function criarPianoGrafico() {
   if (!pianoDiv) return;
   pianoDiv.innerHTML = "";
   Object.keys(pianoSvgKeys).forEach((pitch) => delete pianoSvgKeys[pitch]);
+  if (FASE_JOGO === "andamento") {
+    pianoDiv.style.display = "none";
+    return;
+  }
+  pianoDiv.style.display = "flex";
 
   const svgNS = "http://www.w3.org/2000/svg";
   const width = 1040;
@@ -685,6 +802,8 @@ function criarPianoGrafico() {
 
   for (let i = 0; i < whiteNotes.length; i++) {
     const note = whiteNotes[i];
+    const noteName = note.slice(0, -1);
+    const noteOctave = Number(note.slice(-1));
     const whiteKey = document.createElementNS(svgNS, "rect");
     whiteKey.setAttribute("x", (i * whiteWidth).toString());
     whiteKey.setAttribute("y", "0");
@@ -694,13 +813,12 @@ function criarPianoGrafico() {
     whiteKey.setAttribute("stroke", "#b5ae9d");
     whiteKey.setAttribute("stroke-width", "1");
     whiteKey.classList.add("white-key");
+    if (noteOctave === octaveAtual) whiteKey.classList.add("current-octave");
     whiteKey.dataset.note = note;
     whiteKey.dataset.isBlack = "false";
     whitesGroup.appendChild(whiteKey);
     pianoSvgKeys[normalizePitch(note)] = whiteKey;
 
-    const noteName = note.slice(0, -1);
-    const noteOctave = Number(note.slice(-1));
     if (blackAfter[noteName] && i < whiteNotes.length - 1) {
       const blackNote = `${noteName}#${noteOctave}`;
       const blackWidth = whiteWidth * 0.72;
@@ -718,6 +836,7 @@ function criarPianoGrafico() {
       blackKey.setAttribute("stroke", "#3a3a3a");
       blackKey.setAttribute("stroke-width", "1");
       blackKey.classList.add("black-key");
+      if (noteOctave === octaveAtual) blackKey.classList.add("current-octave");
       blackKey.dataset.note = blackNote;
       blackKey.dataset.isBlack = "true";
       blackKeys.push({ key: blackKey, pitch: normalizePitch(blackNote) });
@@ -765,11 +884,6 @@ function animarPontuacaoFinal() {
 function atualizarEstrelas() {
   const estrelas = document.querySelector(".estrelas");
   const fraseMotivacao = document.getElementById("fraseMotivacao");
-  if (modoAtual === "autoplay") {
-    if (estrelas) estrelas.style.display = "none";
-    if (fraseMotivacao) fraseMotivacao.style.display = "none";
-    return;
-  }
   if (estrelas) estrelas.style.display = "block";
   if (fraseMotivacao) fraseMotivacao.style.display = "block";
   const estrelasSpans = document.querySelectorAll(".estrelas span");
@@ -838,8 +952,232 @@ const pontuacao = document.getElementById("pontuacao");
 const gameMenu = document.getElementById("gameMenu");
 const progressContainer = document.getElementById("progressContainer");
 const progressBar = document.getElementById("progressBar");
-const autoplayButton = document.getElementById("autoplayButton");
-const jogarButton = document.getElementById("jogarButton");
+const preTesteModal = document.getElementById("preTesteModal");
+const preTesteIniciarBtn = document.getElementById("preTesteIniciarBtn");
+const preTesteForm = document.getElementById("preTesteForm");
+const preTesteProgresso = document.getElementById("preTesteProgresso");
+const preTesteTitulo = document.getElementById("preTesteTitulo");
+const perguntasPreTeste = Array.from(
+  document.querySelectorAll("[data-pretest-question]"),
+);
+
+const respostasPreTeste = {
+  q1: null,
+  q2: null,
+  q3: null,
+};
+const respostasPosTeste = {
+  q1: null,
+  q2: null,
+  q3: null,
+};
+let respostasQuestionarioAtual = respostasPreTeste;
+let questionarioAtual = "pre";
+let perguntaAtualIndex = 0;
+
+function configurarPerguntasDaFase() {
+  if (FASE_JOGO === "andamento") {
+    perguntasPreTeste[0].innerHTML = `
+      <p>Questão 1: Esse andamento está rápido ou devagar?</p>
+      <div class="preteste-controls">
+        <button class="preteste-play" data-sequence="C4,E4,G4,C5" data-interval="0.28" type="button" aria-label="Reproduzir sequência rápida" title="Reproduzir sequência"><span aria-hidden="true">&#9654;</span></button>
+      </div>
+      <div class="preteste-opcoes">
+        <button class="preteste-option" data-question="q1" data-answer="rapido" type="button">rápido</button>
+        <button class="preteste-option" data-question="q1" data-answer="devagar" type="button">devagar</button>
+        <button class="preteste-option" data-question="q1" data-answer="medio" type="button">médio</button>
+        <button class="preteste-option" data-question="q1" data-answer="nao-sei" type="button">não sei</button>
+      </div>`;
+    perguntasPreTeste[1].innerHTML = `
+      <p>Questão 2: O segundo som está mais rápido que o primeiro?</p>
+      <div class="preteste-controls">
+        <div class="preteste-audio-item"><span>Primeiro</span><button class="preteste-play" data-sequence="C4,D4,E4" data-interval="0.62" type="button" aria-label="Reproduzir primeiro som" title="Reproduzir primeiro som"><span aria-hidden="true">&#9654;</span></button></div>
+        <span aria-hidden="true">e</span>
+        <div class="preteste-audio-item"><span>Segundo</span><button class="preteste-play" data-sequence="G4,A4,B4" data-interval="0.28" type="button" aria-label="Reproduzir segundo som" title="Reproduzir segundo som"><span aria-hidden="true">&#9654;</span></button></div>
+      </div>
+      <div class="preteste-opcoes">
+        <button class="preteste-option" data-question="q2" data-answer="mais-rapido" type="button">mais rápido</button>
+        <button class="preteste-option" data-question="q2" data-answer="mais-devagar" type="button">mais devagar</button>
+        <button class="preteste-option" data-question="q2" data-answer="igual" type="button">igual</button>
+        <button class="preteste-option" data-question="q2" data-answer="nao-sei" type="button">não sei</button>
+      </div>`;
+    perguntasPreTeste[2].innerHTML = `
+      <p>Questão 3: Essas sequências têm o mesmo andamento?</p>
+      <div class="preteste-controls">
+        <div class="preteste-audio-item"><span>Sequência A</span><button class="preteste-play" data-sequence="C4,E4,G4" data-interval="0.42" type="button" aria-label="Reproduzir sequência A" title="Reproduzir sequência A"><span aria-hidden="true">&#9654;</span></button></div>
+        <span aria-hidden="true">e</span>
+        <div class="preteste-audio-item"><span>Sequência B</span><button class="preteste-play" data-sequence="G3,B3,D4" data-interval="0.42" type="button" aria-label="Reproduzir sequência B" title="Reproduzir sequência B"><span aria-hidden="true">&#9654;</span></button></div>
+      </div>
+      <div class="preteste-opcoes">
+        <button class="preteste-option" data-question="q3" data-answer="sim" type="button">sim</button>
+        <button class="preteste-option" data-question="q3" data-answer="nao" type="button">não</button>
+        <button class="preteste-option" data-question="q3" data-answer="nao-sei" type="button">não sei</button>
+      </div>`;
+  }
+
+  if (preTesteTitulo) {
+    preTesteTitulo.textContent = FASE_JOGO === "andamento"
+      ? "Pré-teste de andamento"
+      : "Pré-teste de oitavas";
+  }
+}
+
+configurarPerguntasDaFase();
+
+async function obterPianoPreTeste() {
+  const ctx = getAudioContext();
+  if (ctx.state === "suspended" || ctx.state === "interrupted") {
+    await ctx.resume();
+  }
+
+  if (pianoLoaded && piano) return piano;
+  if (!pianoLoadingPromise) {
+    pianoLoadingPromise = Soundfont.instrument(ctx, "acoustic_grand_piano", {
+      gain: 1.5,
+    }).then((loadedPiano) => {
+      piano = loadedPiano;
+      pianoLoaded = true;
+      return piano;
+    }).finally(() => {
+      pianoLoadingPromise = null;
+    });
+  }
+  return pianoLoadingPromise;
+}
+
+async function tocarNotaPreTeste(pitch, when = getAudioContext().currentTime) {
+  const instrumento = await obterPianoPreTeste();
+  instrumento.play(pitch, when, { duration: 0.5 });
+}
+
+async function tocarSequenciaPreTeste(notas, intervalo = 0.65) {
+  const sequencia = (notas || "").split(",").map((note) => note.trim()).filter(Boolean);
+  if (!sequencia.length) return;
+
+  const instrumento = await obterPianoPreTeste();
+  const inicio = getAudioContext().currentTime + 0.05;
+  const duracao = Math.min(0.55, intervalo * 0.9);
+  sequencia.forEach((nota, index) => {
+    instrumento.play(nota, inicio + index * intervalo, { duration: duracao });
+  });
+}
+
+function atualizarBotaoInicioPreTeste() {
+  perguntasPreTeste.forEach((pergunta, index) => {
+    pergunta.hidden = index !== perguntaAtualIndex;
+  });
+  const chavePerguntaAtual = perguntasPreTeste[perguntaAtualIndex]?.dataset.pretestQuestion;
+  const respostaSelecionada = Boolean(respostasQuestionarioAtual[chavePerguntaAtual]);
+  const ultimaPergunta = perguntaAtualIndex === perguntasPreTeste.length - 1;
+
+  if (preTesteProgresso) {
+    preTesteProgresso.textContent = `Questão ${perguntaAtualIndex + 1} de ${perguntasPreTeste.length}`;
+  }
+  if (preTesteIniciarBtn) {
+    preTesteIniciarBtn.hidden = !respostaSelecionada;
+    preTesteIniciarBtn.textContent = ultimaPergunta
+      ? questionarioAtual === "pre" ? "Iniciar jogo" : "Concluir"
+      : "Avançar";
+  }
+}
+
+function registrarRespostaPreTeste(pergunta, resposta) {
+  respostasQuestionarioAtual[pergunta] = resposta;
+  const botoes = document.querySelectorAll(`[data-question="${pergunta}"]`);
+  botoes.forEach((botao) => {
+    const selecionado = botao.dataset.answer === resposta;
+    botao.classList.toggle("selecionado", selecionado);
+  });
+  atualizarBotaoInicioPreTeste();
+}
+
+function prepararQuestionario(titulo, textoBotao) {
+  respostasQuestionarioAtual = questionarioAtual === "pre"
+    ? respostasPreTeste
+    : respostasPosTeste;
+  perguntaAtualIndex = 0;
+  perguntasPreTeste.forEach((pergunta) => {
+    pergunta.hidden = pergunta.dataset.pretestQuestion !== "q1";
+  });
+  document.querySelectorAll(".preteste-option.selecionado").forEach((botao) => {
+    botao.classList.remove("selecionado");
+  });
+  if (preTesteTitulo) preTesteTitulo.textContent = titulo;
+  if (preTesteIniciarBtn) {
+    preTesteIniciarBtn.textContent = textoBotao || "Avançar";
+    preTesteIniciarBtn.hidden = true;
+  }
+  if (preTesteProgresso) preTesteProgresso.textContent = "Questão 1 de 3";
+}
+
+function abrirPosTeste() {
+  questionarioAtual = "pos";
+  prepararQuestionario(
+    FASE_JOGO === "andamento" ? "Pós-teste de andamento" : "Pós-teste de oitavas",
+    "Concluir",
+  );
+  if (preTesteModal) {
+    preTesteModal.style.zIndex = "30001";
+    preTesteModal.style.display = "flex";
+  }
+}
+
+preTesteForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const perguntaAtual = perguntasPreTeste[perguntaAtualIndex];
+  const chavePerguntaAtual = perguntaAtual?.dataset.pretestQuestion;
+  if (!respostasQuestionarioAtual[chavePerguntaAtual]) return;
+
+  if (perguntaAtualIndex < perguntasPreTeste.length - 1) {
+    perguntaAtualIndex += 1;
+    atualizarBotaoInicioPreTeste();
+    return;
+  }
+
+  if (preTesteModal) preTesteModal.style.display = "none";
+  if (questionarioAtual === "pos") {
+    if (preTesteModal) preTesteModal.style.zIndex = "12000";
+    return;
+  }
+
+  mostrarAvisoEtapa(0, () => {
+    iniciarPartidaJogo();
+  });
+});
+
+document.addEventListener("click", (event) => {
+  const playNoteButton = event.target.closest(".preteste-play");
+  if (playNoteButton) {
+    const note = playNoteButton.dataset.pretestNote;
+    const sequence = playNoteButton.dataset.sequence;
+    if (note) tocarNotaPreTeste(note).catch(console.error);
+    else if (sequence) {
+      tocarSequenciaPreTeste(
+        sequence,
+        Number(playNoteButton.dataset.interval) || 0.65,
+      ).catch(console.error);
+    }
+    return;
+  }
+
+  const playSequenceButton = event.target.closest(".preteste-play-sequence");
+  if (playSequenceButton) {
+    const sequence = playSequenceButton.dataset.sequence;
+    tocarSequenciaPreTeste(sequence).catch(console.error);
+    return;
+  }
+
+  const optionButton = event.target.closest(".preteste-option");
+  if (optionButton) {
+    const pergunta = optionButton.dataset.question;
+    const resposta = optionButton.dataset.answer;
+    if (pergunta && resposta) {
+      registrarRespostaPreTeste(pergunta, resposta);
+    }
+    return;
+  }
+
+});
 
 const nomesDasMusicas = {
   littlestar: "Twinkle, Twinkle, Little Star - Unknown artist",
@@ -854,10 +1192,7 @@ function obterNomeDaMusica(musicaKey) {
 }
 
 const musicaArmazenada = localStorage.getItem("musica") || "elvis";
-const modoArmazenado = localStorage.getItem("modo") || "autoplay";
-modoMusica = localStorage.getItem("modoMusica") || "jogador";
 musica = musicaArmazenada;
-multiplicadorTempo = modoMusica === "aprendiz" ? 1.428571 : 1;
 
 if (animationId !== null) {
   cancelAnimationFrame(animationId);
@@ -871,86 +1206,28 @@ voltar.addEventListener("click", () => {
   document.getElementById("pontuacaoContainer").style.display = "none";
   document.getElementById("gameMenu").style.display = "none";
   document.getElementById("nomeDaMusica").style.display = "none";
-  document.getElementById("botoesMusica").style.display = "none";
-  document.getElementById("botoesJogar").classList.remove("ativo");
-  document.getElementById("botoesAutoplay").classList.remove("ativo");
   canvas.style.display = "none";
   window.location.href = "selector.html";
-});
-
-autoplayButton.addEventListener("click", () => {
-  if (modoAtual === "autoplay") return;
-  desabilitarTeclado();
-
-  progressBar.style.width = "0%";
-  progressContainer.style.display = "flex";
-  pontuacao.style.display = "none";
-  document.getElementById("pontuacaoContainer").style.display = "none";
-  document.getElementById("pontuacaoTitle").style.display = "none";
-  document.getElementById("gameMenu").style.display = "flex";
-  document.getElementById("nomeDaMusica").textContent =
-    obterNomeDaMusica(musica);
-  document.getElementById("nomeDaMusica").style.display = "block";
-  document.getElementById("botoesMusica").style.display = "flex";
-  document.getElementById("botoesAutoplay").classList.add("ativo");
-  document.getElementById("botoesJogar").classList.remove("ativo");
-  canvas.style.display = "inline";
-
-  modoAtual = "autoplay";
-  pontuation = 0;
-  atualizarPontuacao();
-  resetarCena();
-  carregarPartituraAtual();
-  pauseStartTime = null;
-  pausedTimeOffset = 0;
-
-  if (teclaListener) {
-    document.removeEventListener("keydown", teclaListener);
-    teclaListener = null;
-  }
-  if (animationId !== null) {
-    cancelAnimationFrame(animationId);
-    animationId = null;
-  }
-  const ctx = getAudioContext();
-  if (ctx.state === "suspended" || ctx.state === "interrupted") ctx.resume();
-  if (!pianoLoaded) {
-    Soundfont.instrument(getAudioContext(), "acoustic_grand_piano", {
-      gain: 1.5,
-    }).then((loadedPiano) => {
-      piano = loadedPiano;
-      pianoLoaded = true;
-      startTime = performance.now();
-      render();
-    });
-  } else {
-    startTime = performance.now();
-    render();
-  }
 });
 
 function iniciarPartidaJogo() {
   criarPianoVirtual();
 
-  document.getElementById("gameMenu").style.display = "flex";
+  document.getElementById("gameMenu").style.display = "none";
   pontuacao.style.display = "block";
-  document.getElementById("nomeDaMusica").textContent =
-    obterNomeDaMusica(musica);
   document.getElementById("nomeDaMusica").style.display = "block";
   canvas.style.display = "inline";
   progressBar.style.width = "0%";
   progressContainer.style.display = "flex";
   document.getElementById("pontuacaoContainer").style.display = "block";
   document.getElementById("pontuacaoTitle").style.display = "block";
-  document.getElementById("botoesMusica").style.display = "flex";
-  document.getElementById("botoesJogar").classList.add("ativo");
-  document.getElementById("botoesAutoplay").classList.remove("ativo");
 
   modoAtual = "jogar";
+  faseEtapaIndex = 0;
+  tentativasPorEtapa = [0, 0, 0];
   pontuation = 0;
   atualizarPontuacao();
-  resetarCena();
-  carregarPartituraAtual();
+  iniciarFaseAtual();
   pauseStartTime = null;
   pausedTimeOffset = 0;
 
@@ -982,11 +1259,6 @@ function iniciarPartidaJogo() {
     render();
   }
 }
-
-jogarButton.addEventListener("click", () => {
-  if (modoAtual === "jogar") return;
-  iniciarPartidaJogo();
-});
 
 resetar.addEventListener("click", () => {
   resetarCena();
@@ -1038,11 +1310,15 @@ function carregarPartituraAtual() {
   else carregarPartituraFurElise();
 }
 
-for (const [key, pitch] of Object.entries(keyMap))
-  pitchToKey[normalizePitch(pitch)] = key;
+rebuildPitchToKey();
 
-function carregarNotas(notes) {
-  for (const note of notes) {
+function carregarNotas(notes = []) {
+  const notasAjustadas = (notes ?? []).map((note) => ({
+    ...note,
+    pitch: normalizePitchOctave(note.pitch, octaveAtual),
+  }));
+
+  for (const note of notasAjustadas) {
     const key = pitchToKey[note.pitch];
     if (!key) {
       console.warn(`⚠️ Sem mapeamento: ${note.pitch}`);
@@ -1050,7 +1326,11 @@ function carregarNotas(notes) {
     }
     addCubeToScene(key, note.start_ms, VELOCIDADE_CUBO);
   }
-  aplicarMultiplicadorTempo();
+  if (FASE_JOGO === "andamento") {
+    spawnEvents.forEach((event) => {
+      event.delay *= fatorTempoPartitura;
+    });
+  }
   totalNotas = spawnEvents.length;
   pontosParaAcerto = PONTUACAO_MAXIMA / totalNotas;
   duracaoTotal = Math.max(...spawnEvents.map((e) => e.delay)) + 5000;

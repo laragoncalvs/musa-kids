@@ -19,10 +19,12 @@
       overflow: hidden;
     }
 
-    #jogarButton,
+    .jogarButton,
     #autoplayButton {
+      display: inline-block;
       padding: 12px 40px;
       color: #0e0e0e;
+      text-decoration: none;
       border-radius: 28px;
       cursor: pointer;
       transition: background-color 0.3s, color 0.3s;
@@ -34,7 +36,7 @@
 
     }
 
-    #jogarButton {
+    .jogarButton {
       background-color: #F5873F;
       z-index: 3000;
     }
@@ -52,7 +54,7 @@
     }
 
     #autoplayButton:hover,
-    #jogarButton:hover {
+    .jogarButton:hover {
       background-color: #34f7d6;
     }
 
@@ -213,7 +215,7 @@
         object-fit: cover;
       }
 
-      #jogarButton {
+      .jogarButton {
         padding: 10px 30px;
         font-size: 0.5rem;
       }
@@ -237,8 +239,8 @@
       
       <div>
 
-        <button id="jogarButton" onclick="window.location.href='selector.html'">INICIAR</button>
-        <button id="jogarButton" onclick="window.location.href='video-demonstracao.html'">COMO JOGAR</button>
+        <a class="jogarButton" href="./selector.html">INICIAR</a>
+        <a class="jogarButton" href="./video-demonstracao.html">COMO JOGAR</a>
       </div>
     </div>
     <div id="degrade"></div>

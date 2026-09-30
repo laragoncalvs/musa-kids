@@ -85,6 +85,22 @@
       opacity: 0.85;
     }
 
+    #pianoGraphic rect.white-key.current-octave {
+      fill: #f5873f;
+      stroke: #fff2b3;
+      stroke-width: 2;
+    }
+
+    #pianoGraphic rect.black-key.current-octave {
+      fill: #E323CA;
+      stroke: #ffb7f2;
+      stroke-width: 2;
+    }
+
+    #pianoGraphic rect.current-octave.active {
+      fill: #64fedd;
+    }
+
     @media (max-width: 860px) {
       #pianoGraphic {
         height: 120px;
@@ -168,45 +184,6 @@
         1px 1px 0 #B03A74;
       background-color: rgba(0, 0, 0, 0.5);
       border-radius: 8px;
-    }
-
-    /* Container de botões abaixo do nome da música */
-    #botoesMusica {
-      position: fixed;
-      top: 50px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1500;
-      display: none;
-      flex-direction: row;
-      gap: 15px;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #botoesMusica button {
-      padding: 8px 20px;
-      color: #ffffff;
-      border-radius: 18px;
-      cursor: pointer;
-      transition: background-color 0.3s, color 0.3s;
-      font-size: 0.6rem;
-      font-weight: 400;
-      border: none;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-      font-family: 'Press Start 2P', monospace;
-      background-color: rgb(0, 0, 0);
-    }
-
-    #botoesMusica button:hover {
-      opacity: 0.8;
-    }
-
-    #botoesMusica button.ativo {
-      background-color: transparent !important;
-      border: 2px solid #64fedd !important;
-      color: #64fedd !important;
-      font-weight: bold !important;
     }
 
     /* Progress bar de pontuação */
@@ -345,6 +322,267 @@
 
     #fimDaCena button:hover {
       opacity: 0.8;
+    }
+
+    #preTesteModal {
+      position: fixed;
+      inset: 0;
+      z-index: 12000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(11, 9, 18, 0.88);
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .preteste-card {
+      width: min(760px, 94vw);
+      max-height: 90vh;
+      overflow-y: auto;
+      background: rgba(24, 23, 35, 0.96);
+      border: 1px solid rgba(100, 254, 221, 0.38);
+      border-radius: 16px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+      padding: 32px;
+      color: #ffffff;
+      font-family: "Trebuchet MS", sans-serif;
+      box-sizing: border-box;
+    }
+
+    #preTesteForm {
+      width: 100%;
+    }
+
+    .preteste-card h3 {
+      margin: 0 0 16px;
+      font-size: 1.55rem;
+      color: #64fedd;
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    #preTesteProgresso {
+      margin: 0 0 24px;
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 1rem;
+      text-align: center;
+    }
+
+    .preteste-pergunta[hidden],
+    .preteste-start[hidden] {
+      display: none !important;
+    }
+
+    .preteste-pergunta {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 28px 24px;
+      margin-bottom: 20px;
+      min-height: 200px;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    .preteste-pergunta p {
+      margin: 0 0 20px;
+      line-height: 1.5;
+      font-size: 1.2rem;
+      color: #f3f3f3;
+    }
+
+    .preteste-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .preteste-play,
+    .preteste-play-sequence,
+    .preteste-option,
+    .preteste-start {
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: "Trebuchet MS", sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      min-height: 48px;
+      transition: transform 0.15s ease, opacity 0.15s ease, border-color 0.15s ease;
+    }
+
+    .preteste-play,
+    .preteste-play-sequence {
+      display: inline-grid;
+      place-items: center;
+      width: 56px;
+      height: 56px;
+      min-height: 56px;
+      padding: 0;
+      border: 2px solid rgba(255, 255, 255, 0.75);
+      border-radius: 50%;
+      background: #64fedd;
+      color: #0b0912;
+      font-size: 1.45rem;
+      line-height: 1;
+      box-shadow: 0 5px 16px rgba(100, 254, 221, 0.2);
+    }
+
+    .preteste-audio-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .preteste-opcoes {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .preteste-option {
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+      padding: 12px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .preteste-option.selecionado {
+      background: rgba(100, 254, 221, 0.18);
+      border-color: #64fedd;
+      color: #64fedd;
+    }
+
+    .preteste-start {
+      display: block;
+      margin: 20px auto 0;
+      background: #E323CA;
+      color: white;
+      padding: 14px 32px;
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .preteste-start:not(:disabled) {
+      opacity: 1;
+      cursor: pointer;
+    }
+
+    .preteste-play:hover,
+    .preteste-play-sequence:hover,
+    .preteste-option:hover,
+    .preteste-start:not(:disabled):hover {
+      transform: translateY(-1px);
+    }
+
+    .preteste-play:focus-visible,
+    .preteste-play-sequence:focus-visible,
+    .preteste-option:focus-visible,
+    .preteste-start:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: 3px;
+    }
+
+    #avisoOitavaModal {
+      position: fixed;
+      inset: 0;
+      z-index: 25000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(11, 9, 18, 0.86);
+    }
+
+    #avisoOitavaConteudo {
+      width: min(620px, 90vw);
+      padding: 28px 24px;
+      border: 2px solid #64fedd;
+      border-radius: 18px;
+      background: #181723;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      color: #fff;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.8rem;
+      line-height: 1.9;
+      text-align: center;
+      animation: fadeIn 0.35s ease-out both;
+    }
+
+    @media (max-width: 768px) {
+      .preteste-card {
+        padding: 24px 18px;
+      }
+
+      .preteste-card h3 {
+        font-size: 1.35rem;
+      }
+
+      .preteste-pergunta {
+        padding: 24px 16px;
+      }
+
+      .preteste-pergunta p {
+        font-size: 1.1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #preTesteModal {
+        padding: 12px;
+      }
+
+      .preteste-card {
+        width: 100%;
+        max-height: 94vh;
+        padding: 22px 14px;
+      }
+
+      .preteste-card h3 {
+        font-size: 1.2rem;
+      }
+
+      #preTesteProgresso {
+        margin-bottom: 18px;
+        font-size: 0.95rem;
+      }
+
+      .preteste-pergunta {
+        min-height: 190px;
+        padding: 22px 12px;
+      }
+
+      .preteste-pergunta p {
+        font-size: 1rem;
+      }
+
+      .preteste-opcoes {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .preteste-option {
+        padding: 10px 8px;
+        overflow-wrap: anywhere;
+      }
+
+      .preteste-option,
+      .preteste-start {
+        font-size: 0.95rem;
+      }
     }
 
     #pontuacaoFinal {
@@ -612,16 +850,6 @@
         width: 80%;
       }
 
-      #botoesMusica {
-        top: 40px;
-        gap: 5px;
-      }
-
-      #botoesMusica button {
-        font-size: 0.45rem;
-        padding: 4px 10px;
-      }
-
       #pontuacaoContainer {
         width: 120px;
         top: 75px;
@@ -673,16 +901,6 @@
         top: 5px;
       }
 
-      #botoesMusica {
-        top: 30px;
-        gap: 3px;
-      }
-
-      #botoesMusica button {
-        font-size: 0.35rem;
-        padding: 3px 8px;
-      }
-
       #pontuacaoContainer {
         width: 80px;
         height: 8px;
@@ -727,18 +945,10 @@
   <script>
     // Iniciar o jogo automaticamente ao carregar
     document.addEventListener("DOMContentLoaded", () => {
-      const modoArmazenado = localStorage.getItem("modo") || "autoplay";
-      const autoplayButton = document.getElementById("autoplayButton");
-      const jogarButton = document.getElementById("jogarButton");
-
-      // Pequeno delay para garantir que o script principal foi carregado
-      setTimeout(() => {
-        if (modoArmazenado === "autoplay") {
-          autoplayButton.click();
-        } else {
-          jogarButton.click();
-        }
-      }, 100);
+      const preTesteModal = document.getElementById("preTesteModal");
+      if (preTesteModal) {
+        preTesteModal.style.display = "flex";
+      }
     });
   </script>
 
@@ -755,8 +965,6 @@
   </div>
 
   <!-- Botões escondidos para inicialização -->
-  <button id="jogarButton" style="display: none;"></button>
-  <button id="autoplayButton" style="display: none;"></button>
 
   <!-- Pontuação no canto superior esquerdo -->
   <h2 id="pontuacaoTitle">Pontuação</h2>
@@ -764,12 +972,6 @@
 
   <!-- Nome da música no topo -->
   <h2 id="nomeDaMusica">Nome da Música</h2>
-
-  <!-- Botões JOGAR e AUTOPLAY abaixo do nome -->
-  <div id="botoesMusica">
-    <button id="botoesJogar" onclick="document.getElementById('jogarButton').click()">Jogar</button>
-    <button id="botoesAutoplay" onclick="document.getElementById('autoplayButton').click()">AutoPlay</button>
-  </div>
 
   <!-- Progress bar de pontuação -->
   <div id="pontuacaoContainer">
@@ -800,6 +1002,61 @@
     </div>
   </div>
 
+  <div id="preTesteModal" style="display:flex;">
+    <div class="preteste-card">
+      <form id="preTesteForm" novalidate>
+      <h3 id="preTesteTitulo">Primeira fase: Escalas</h3>
+      <p id="preTesteProgresso">Questão 1 de 3</p>
+
+      <div class="preteste-pergunta" data-pretest-question="q1">
+        <p>Questão 1: Esse som é grave ou agudo?</p>
+        <div class="preteste-controls">
+          <button class="preteste-play" data-pretest-note="C3" type="button" aria-label="Reproduzir som" title="Reproduzir som"><span aria-hidden="true">&#9654;</span></button>
+        </div>
+        <div class="preteste-opcoes">
+          <button class="preteste-option" data-question="q1" data-answer="grave" type="button">grave</button>
+          <button class="preteste-option" data-question="q1" data-answer="agudo" type="button">agudo</button>
+          <button class="preteste-option" data-question="q1" data-answer="medio" type="button">médio</button>
+          <button class="preteste-option" data-question="q1" data-answer="nao-sei" type="button">não sei</button>
+        </div>
+      </div>
+
+      <div class="preteste-pergunta" data-pretest-question="q2" hidden>
+        <p>Questão 2: Qual som é mais grave em relação ao outro?</p>
+        <div class="preteste-controls">
+          <div class="preteste-audio-item"><span>Som A</span><button class="preteste-play" data-pretest-note="C3" type="button" aria-label="Reproduzir som A" title="Reproduzir som A"><span aria-hidden="true">&#9654;</span></button></div>
+          <span aria-hidden="true">ou</span>
+          <div class="preteste-audio-item"><span>Som B</span><button class="preteste-play" data-pretest-note="G4" type="button" aria-label="Reproduzir som B" title="Reproduzir som B"><span aria-hidden="true">&#9654;</span></button></div>
+        </div>
+        <div class="preteste-opcoes">
+          <button class="preteste-option" data-question="q2" data-answer="mais-grave" type="button">Som A</button>
+          <button class="preteste-option" data-question="q2" data-answer="mais-agudo" type="button">Som B</button>
+          <button class="preteste-option" data-question="q2" data-answer="igual" type="button">iguais</button>
+          <button class="preteste-option" data-question="q2" data-answer="nao-sei" type="button">não sei</button>
+        </div>
+      </div>
+
+      <div class="preteste-pergunta" data-pretest-question="q3" hidden>
+        <p>Questão 3: Essa sequência de notas pertencem à mesma oitava?</p>
+        <div class="preteste-controls">
+          <button class="preteste-play-sequence" type="button" data-sequence="C4,E4,G4" aria-label="Reproduzir sequência de notas" title="Reproduzir sequência"><span aria-hidden="true">&#9654;</span></button>
+        </div>
+        <div class="preteste-opcoes">
+          <button class="preteste-option" data-question="q3" data-answer="sim" type="button">sim</button>
+          <button class="preteste-option" data-question="q3" data-answer="nao" type="button">não</button>
+          <button class="preteste-option" data-question="q3" data-answer="nao-sei" type="button">não sei</button>
+        </div>
+      </div>
+
+      <button id="preTesteIniciarBtn" class="preteste-start" type="submit" hidden>Avançar</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="avisoOitavaModal" role="status" aria-live="polite">
+    <div id="avisoOitavaConteudo"></div>
+  </div>
+
   <div id="fimDaCena">
     <div class="estrelas">
       <span>&#9733;</span>
@@ -811,6 +1068,7 @@
     <div id="fimDaCena-buttons">
       <button onclick="window.location.href='game.html'">Jogar novamente</button>
       <button onclick="window.location.href='selector.html'">Voltar</button>
+      <button id="studyContinueButton" type="button" style="display:none">Continuar estudo</button>
     </div>
   </div>
 

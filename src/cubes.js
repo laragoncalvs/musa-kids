@@ -154,7 +154,7 @@ const createCube = (key) => {
         }
     }
 
-    const cube = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.4, 0.8), materials);
+    const cube = new THREE.Mesh(new THREE.BoxGeometry(1, 0.7,1), materials);
     return cube;
 };
 
@@ -164,14 +164,13 @@ Object.keys(letterTextures).forEach((key) => {
     allCubes[key] = createCube(key);
 });
 
-const linhas = [-6, -4.9, -3.8, -2.7, -1.6, -0.55, 0.55, 1.6, 2.7, 3.8, 4.9, 6];
+const linhas = [ -4.3,-3.6,-2.8, -2.1, -1.4, 0, 0.6, 1.2, 1.8, 2.5, 3.2, 3.8];
 const initz = -11;
 const inity = 0.4;
 
 const posicoes = [
-    ["a", "q", "z", "1", "aspa"], ["s", "w", "x", "2"], ["c", "d", "e", "3"], ["r", "f", "v", "4"], ["g", "t", "b", "5"],
-    ["h", "y", "n", "6"], ["u", "j", "m", "7"], ["k", "i", "8"], ["o", "l", "9", "virgula"], ["p", "ç", "0"], ["hifen", "agudo", "til", "ponto_virgula"],
-    ["igual", "chave_esquerda", "chave_direita"]
+    ["a"], ["w"], ["s"], ["e"], ["d"], ["f"], ["t"], ["g"], ["y"], ["h"], ["u"], ["j"]
+  
 ];
 
 posicoes.forEach((grupo, index) => {
