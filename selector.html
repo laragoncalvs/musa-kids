@@ -601,6 +601,7 @@
     document.addEventListener("DOMContentLoaded", () => {
       const faseAndamentoButton = document.getElementById("faseAndamentoButton");
       const faseOitavasButton = document.getElementById("faseOitavasButton");
+      const faseNotasButton = document.getElementById("faseNotasButton");
       const iniciarButton = document.getElementById("jogarButton");
       let faseSelecionada = "andamento";
 
@@ -608,10 +609,12 @@
         faseSelecionada = fase;
         faseOitavasButton.classList.toggle("fase-selecionada", fase === "oitavas");
         faseAndamentoButton.classList.toggle("fase-selecionada", fase === "andamento");
+        faseNotasButton.classList.toggle("fase-selecionada", fase === "notas");
       }
 
       faseAndamentoButton.addEventListener("click", () => selecionarFase("andamento"));
       faseOitavasButton.addEventListener("click", () => selecionarFase("oitavas"));
+      faseNotasButton.addEventListener("click", () => selecionarFase("notas"));
       iniciarButton.addEventListener("click", () => {
         localStorage.setItem("musica", "jinglebell");
         localStorage.setItem("faseJogo", faseSelecionada);
@@ -635,6 +638,9 @@
       </button>
       <button id="faseOitavasButton" class="fase-card" type="button">
         <div><h1>2ª FASE - OITAVAS</h1></div>
+      </button>
+      <button id="faseNotasButton" class="fase-card" type="button">
+        <div><h1>3ª FASE - NOTAS MUSICAIS</h1></div>
       </button>
     </div>
 

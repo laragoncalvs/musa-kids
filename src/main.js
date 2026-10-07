@@ -19,6 +19,18 @@ const lagoJson = partiturasDisponiveis.lago ?? [];
 const littlestar = partiturasDisponiveis.littlestar ?? [];
 const jinglebell = partiturasDisponiveis.jinglebell ?? [];
 const odeToJoy = partiturasDisponiveis.ode ?? [];
+const MUSICAS_NOTAS = ["jinglebell", "littlestar", "ode"].filter(
+  (key) => (partiturasDisponiveis[key] ?? []).length > 0,
+);
+const NOTAS_NATURAIS = [
+  { pitch: "C", name: "dó", key: "a" },
+  { pitch: "D", name: "ré", key: "s" },
+  { pitch: "E", name: "mi", key: "d" },
+  { pitch: "F", name: "fá", key: "f" },
+  { pitch: "G", name: "sol", key: "g" },
+  { pitch: "A", name: "lá", key: "h" },
+  { pitch: "B", name: "si", key: "j" },
+];
 
 let audioContext = null;
 function getAudioContext() {
@@ -34,8 +46,8 @@ const TEMPO_SEQUENCE = [
   { label: "devagar", multiplier: 2.2 },
   { label: "rápido", multiplier: 0.8 },
 ];
-const FASE_JOGO = localStorage.getItem("faseJogo") === "andamento"
-  ? "andamento"
+const FASE_JOGO = ["andamento", "oitavas", "notas"].includes(localStorage.getItem("faseJogo"))
+  ? localStorage.getItem("faseJogo")
   : "oitavas";
 const MAX_TENTATIVAS_POR_ETAPA = 5;
 const META_PONTUACAO = 800;
@@ -66,7 +78,6 @@ let pontosParaAcerto = 0;
 const PONTUACAO_MAXIMA = 1000;
 let duracaoTotal = 0;
 const pianoSvgKeys = {};
-criarPianoGrafico();
 function normalizePitch(pitch) {
   if (!pitch) return pitch;
   if (pitch.startsWith("B#")) {
@@ -279,6 +290,7 @@ scene.add(new THREE.AmbientLight(0xffffff, 2));
 const directionalLight = new THREE.DirectionalLight(0xf5f591, 4);
 directionalLight.position.set(0, 10, 0);
 scene.add(directionalLight);
+criarPianoGrafico();
 
 window.addEventListener("resize", () => {
   const pianoDiv = document.getElementById("pianoVirtual");
@@ -290,11 +302,12 @@ window.addEventListener("resize", () => {
   const gameArea = document.getElementById("gameArea");
   if (gameArea) gameArea.style.height = height + "px";
   renderer.domElement.style.height = height + "px";
+  posicionarRotulosColunasNotas();
 });
 
 const activeCubes = [];
 const spawnEvents = [];
-const VELOCIDADE_CUBO = 0.08;
+const VELOCIDADE_CUBO = 0.05;
 
 function addCubeToScene(letter, delay, speed) {
   spawnEvents.push({ letter, delay, speed, spawned: false });
@@ -448,8 +461,8 @@ function render() {
   if (activeCubes.length === 0 && spawnEvents.every((e) => e.spawned)) {
     if (!fimTimeout) {
       fimTimeout = setTimeout(() => {
-        const fasePassou = pontuation > META_PONTUACAO;
-        const atingiuLimite = tentativasPorEtapa[faseEtapaIndex] >= MAX_TENTATIVAS_POR_ETAPA;
+        const fasePassou = pontuation >= (FASE_JOGO === "notas" ? 850 : META_PONTUACAO);
+        const atingiuLimite = tentativasPorEtapa[faseEtapaIndex] + 1 >= MAX_TENTATIVAS_POR_ETAPA;
 
         if (faseEmAndamento && !fasePassou && !atingiuLimite) {
           finalizarFaseAtual();
@@ -458,8 +471,8 @@ function render() {
 
         const quantidadeEtapas = FASE_JOGO === "oitavas"
           ? OCTAVE_SEQUENCE.length
-          : TEMPO_SEQUENCE.length;
-        if (faseEmAndamento && fasePassou && faseEtapaIndex < quantidadeEtapas - 1) {
+          : FASE_JOGO === "notas" ? MUSICAS_NOTAS.length : TEMPO_SEQUENCE.length;
+        if (faseEmAndamento && (fasePassou || atingiuLimite) && faseEtapaIndex < quantidadeEtapas - 1) {
           finalizarFaseAtual();
           return;
         }
@@ -553,19 +566,25 @@ function atualizarEstadoFase() {
   if (elemento) {
     const etapa = FASE_JOGO === "oitavas"
       ? `${octaveAtual}ª oitava`
-      : `Andamento ${TEMPO_SEQUENCE[faseEtapaIndex].label}`;
+      : FASE_JOGO === "notas"
+        ? `Música ${faseEtapaIndex + 1} de ${MUSICAS_NOTAS.length}`
+        : `Andamento ${TEMPO_SEQUENCE[faseEtapaIndex].label}`;
     elemento.textContent = `${nome} • ${etapa}`;
   }
 }
 
 function iniciarFaseAtual() {
   faseEmAndamento = true;
+  if (FASE_JOGO === "notas") musica = MUSICAS_NOTAS[faseEtapaIndex] || "jinglebell";
   if (FASE_JOGO === "oitavas") {
     octaveAtual = OCTAVE_SEQUENCE[faseEtapaIndex];
     fatorTempoPartitura = 1;
-  } else {
+  } else if (FASE_JOGO === "andamento") {
     octaveAtual = OCTAVE_SEQUENCE[0];
     fatorTempoPartitura = TEMPO_SEQUENCE[faseEtapaIndex].multiplier;
+  } else {
+    octaveAtual = 4;
+    fatorTempoPartitura = 1;
   }
   activeKeyMap = buildKeyMap(octaveAtual);
   localStorage.setItem("octave", String(octaveAtual));
@@ -610,6 +629,7 @@ function mostrarAvisoEtapa(index, aoFechar) {
     "Agora vamos tocar mais devagar.",
     "Agora vamos tocar mais rápido.",
   ];
+  const mensagemNotas = `Próxima música: ${obterNomeDaMusica(MUSICAS_NOTAS[index])}.`;
 
   if (!modal || !conteudo) {
     aoFechar();
@@ -618,7 +638,7 @@ function mostrarAvisoEtapa(index, aoFechar) {
 
   conteudo.textContent = FASE_JOGO === "oitavas"
     ? mensagensOitavas[OCTAVE_SEQUENCE[index]]
-    : mensagensAndamento[index];
+    : FASE_JOGO === "notas" ? mensagemNotas : mensagensAndamento[index];
   modal.style.display = "flex";
   window.setTimeout(() => {
     modal.style.display = "none";
@@ -631,9 +651,9 @@ function finalizarFaseAtual() {
   tentativasPorEtapa[faseEtapaIndex] = tentativasAtuais;
   const quantidadeEtapas = FASE_JOGO === "oitavas"
     ? OCTAVE_SEQUENCE.length
-    : TEMPO_SEQUENCE.length;
+    : FASE_JOGO === "notas" ? MUSICAS_NOTAS.length : TEMPO_SEQUENCE.length;
 
-  if (pontuation > META_PONTUACAO) {
+  if (pontuation >= (FASE_JOGO === "notas" ? 850 : META_PONTUACAO) || tentativasAtuais >= MAX_TENTATIVAS_POR_ETAPA) {
     if (faseEtapaIndex < quantidadeEtapas - 1) {
       faseEtapaIndex += 1;
       mostrarAvisoEtapa(faseEtapaIndex, iniciarFaseAtual);
@@ -775,22 +795,28 @@ function criarPianoGrafico() {
   pianoDiv.style.display = "flex";
 
   const svgNS = "http://www.w3.org/2000/svg";
-  const width = 1040;
   const height = 150;
-  const svg = document.createElementNS(svgNS, "svg");
-  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-  svg.style.width = "100%";
-  svg.style.height = "100%";
 
   const noteOrder = ["A", "B", "C", "D", "E", "F", "G"];
   const whiteNotes = [];
-  let octave = 0;
-  for (let i = 0; whiteNotes.length < 52; i++) {
-    const noteName = noteOrder[i % 7];
-    whiteNotes.push(`${noteName}${octave}`);
-    if (noteName === "B") octave++;
+  if (FASE_JOGO === "notas") {
+    whiteNotes.push(...NOTAS_NATURAIS.map((nota) => `${nota.pitch}${octaveAtual}`));
+  } else {
+    let octave = 0;
+    for (let i = 0; whiteNotes.length < 52; i++) {
+      const noteName = noteOrder[i % 7];
+      whiteNotes.push(`${noteName}${octave}`);
+      if (noteName === "B") octave++;
+    }
   }
+
+  const width = whiteNotes.length * 40;
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  svg.style.width = `${width}px`;
+  svg.style.maxWidth = "100%";
+  svg.style.height = "100%";
 
   const whiteWidth = width / whiteNotes.length;
   const blackAfter = { A: true, C: true, D: true, F: true, G: true };
@@ -818,6 +844,20 @@ function criarPianoGrafico() {
     whiteKey.dataset.isBlack = "false";
     whitesGroup.appendChild(whiteKey);
     pianoSvgKeys[normalizePitch(note)] = whiteKey;
+
+    if (FASE_JOGO === "notas") {
+      const noteLabel = document.createElementNS(svgNS, "text");
+      noteLabel.setAttribute("x", (i * whiteWidth + whiteWidth / 2).toString());
+      noteLabel.setAttribute("y", (height - 12).toString());
+      noteLabel.setAttribute("text-anchor", "middle");
+      noteLabel.setAttribute("font-size", "14");
+      noteLabel.setAttribute("font-family", "Arial, sans-serif");
+      noteLabel.setAttribute("font-weight", "700");
+      noteLabel.setAttribute("fill", "#333");
+      noteLabel.setAttribute("pointer-events", "none");
+      noteLabel.textContent = NOTAS_NATURAIS.find((nota) => nota.pitch === noteName)?.name ?? noteName;
+      whitesGroup.appendChild(noteLabel);
+    }
 
     if (blackAfter[noteName] && i < whiteNotes.length - 1) {
       const blackNote = `${noteName}#${noteOctave}`;
@@ -852,6 +892,56 @@ function criarPianoGrafico() {
   svg.appendChild(blacksGroup);
 
   pianoDiv.appendChild(svg);
+  criarRotulosColunasNotas();
+}
+
+function criarRotulosColunasNotas() {
+  const gameArea = document.getElementById("gameArea");
+  if (!gameArea) return;
+  let labels = document.getElementById("notaLaneLabels");
+  if (!labels) {
+    labels = document.createElement("div");
+    labels.id = "notaLaneLabels";
+    labels.className = "nota-lane-labels";
+    gameArea.appendChild(labels);
+  }
+  labels.replaceChildren(...NOTAS_NATURAIS.map((nota) => {
+    const label = document.createElement("span");
+    label.textContent = nota.name;
+    return label;
+  }));
+  labels.style.display = FASE_JOGO === "notas" ? "block" : "none";
+  posicionarRotulosColunasNotas();
+}
+
+function posicionarRotulosColunasNotas() {
+  const gameArea = document.getElementById("gameArea");
+  const labels = document.getElementById("notaLaneLabels");
+  if (!gameArea || !labels || FASE_JOGO !== "notas") return;
+
+  const centrosDasRaias = {
+    a: -4.3,
+    s: -2.8,
+    d: -1.4,
+    f: 0,
+    g: 1.2,
+    h: 2.5,
+    j: 3.8,
+  };
+  const bounds = gameArea.getBoundingClientRect();
+  camera.updateMatrixWorld(true);
+
+  labels.querySelectorAll("span").forEach((label, index) => {
+    const nota = NOTAS_NATURAIS[index];
+    const point = new THREE.Vector3(
+      centrosDasRaias[nota.key] * (scaleMultiplier - 0.03),
+      0.4,
+      plane2.position.z,
+    );
+    point.project(camera);
+    label.style.left = `${(point.x * 0.5 + 0.5) * bounds.width}px`;
+    label.style.top = `${(-point.y * 0.5 + 0.5) * bounds.height}px`;
+  });
 }
 
 function atualizarPontuacao() {
@@ -989,16 +1079,16 @@ function configurarPerguntasDaFase() {
         <button class="preteste-option" data-question="q1" data-answer="nao-sei" type="button">não sei</button>
       </div>`;
     perguntasPreTeste[1].innerHTML = `
-      <p>Questão 2: O segundo som está mais rápido que o primeiro?</p>
+      <p>Questão 2: Qual som é mais rápido?</p>
       <div class="preteste-controls">
         <div class="preteste-audio-item"><span>Primeiro</span><button class="preteste-play" data-sequence="C4,D4,E4" data-interval="0.62" type="button" aria-label="Reproduzir primeiro som" title="Reproduzir primeiro som"><span aria-hidden="true">&#9654;</span></button></div>
-        <span aria-hidden="true">e</span>
+       
         <div class="preteste-audio-item"><span>Segundo</span><button class="preteste-play" data-sequence="G4,A4,B4" data-interval="0.28" type="button" aria-label="Reproduzir segundo som" title="Reproduzir segundo som"><span aria-hidden="true">&#9654;</span></button></div>
       </div>
       <div class="preteste-opcoes">
-        <button class="preteste-option" data-question="q2" data-answer="mais-rapido" type="button">mais rápido</button>
-        <button class="preteste-option" data-question="q2" data-answer="mais-devagar" type="button">mais devagar</button>
-        <button class="preteste-option" data-question="q2" data-answer="igual" type="button">igual</button>
+        <button class="preteste-option" data-question="q2" data-answer="mais-rapido" type="button">primeiro</button>
+        <button class="preteste-option" data-question="q2" data-answer="mais-devagar" type="button">segundo</button>
+        <button class="preteste-option" data-question="q2" data-answer="igual" type="button">são iguais</button>
         <button class="preteste-option" data-question="q2" data-answer="nao-sei" type="button">não sei</button>
       </div>`;
     perguntasPreTeste[2].innerHTML = `
@@ -1018,7 +1108,56 @@ function configurarPerguntasDaFase() {
   if (preTesteTitulo) {
     preTesteTitulo.textContent = FASE_JOGO === "andamento"
       ? "Pré-teste de andamento"
-      : "Pré-teste de oitavas";
+      : FASE_JOGO === "notas" ? "Pré-teste de notas musicais" : "Pré-teste de oitavas";
+  }
+  if (FASE_JOGO === "notas") configurarPerguntasDeNotas();
+}
+
+let notaPerguntaAlvo = "C";
+let notaPerguntaAuditiva = "G";
+
+function escolherNotaAleatoria() {
+  return NOTAS_NATURAIS[Math.floor(Math.random() * NOTAS_NATURAIS.length)];
+}
+
+function criarTecladoNotas(alvo = null) {
+  const teclasBrancas = NOTAS_NATURAIS.map((nota, index) =>
+    `<button class="preteste-note-key branca${nota.pitch === alvo ? " alvo" : ""}" type="button" data-note-pitch="${nota.pitch}" aria-label="${nota.name}" title="${nota.name}" style="--left:${(index / NOTAS_NATURAIS.length) * 100}%"></button>`
+  ).join("");
+  const teclasPretas = [
+    { pitch: "C#", nome: "dó sustenido", depoisDe: 1 },
+    { pitch: "D#", nome: "ré sustenido", depoisDe: 2 },
+    { pitch: "F#", nome: "fá sustenido", depoisDe: 4 },
+    { pitch: "G#", nome: "sol sustenido", depoisDe: 5 },
+    { pitch: "A#", nome: "lá sustenido", depoisDe: 6 },
+  ].map((nota) =>
+    `<button class="preteste-note-key preta" type="button" data-note-pitch="${nota.pitch}" aria-label="${nota.nome}" title="${nota.nome}" style="--left:${((nota.depoisDe / NOTAS_NATURAIS.length) * 100) - 5}%"></button>`
+  ).join("");
+
+  return `<div class="preteste-note-piano">${teclasBrancas}${teclasPretas}</div>`;
+}
+
+function criarOpcoesNotas(pergunta) {
+  return `<div class="preteste-opcoes">${NOTAS_NATURAIS.map((nota) =>
+    `<button class="preteste-option" data-question="${pergunta}" data-answer="${nota.pitch}" type="button">${nota.name}</button>`
+  ).join("")}<button class="preteste-option" data-question="${pergunta}" data-answer="nao-sei" type="button">não sei</button></div>`;
+}
+
+function configurarPerguntasDeNotas() {
+  notaPerguntaAlvo = escolherNotaAleatoria().pitch;
+  notaPerguntaAuditiva = escolherNotaAleatoria().pitch;
+  const nomeAlvo = NOTAS_NATURAIS.find((nota) => nota.pitch === notaPerguntaAlvo).name;
+  const notaAuditiva = NOTAS_NATURAIS.find((nota) => nota.pitch === notaPerguntaAuditiva);
+  const teclado = criarTecladoNotas(notaPerguntaAlvo);
+
+  perguntasPreTeste[0].innerHTML = `<p>Questão 1: Qual é o nome dessa nota?</p>${teclado}${criarOpcoesNotas("q1")}`;
+  perguntasPreTeste[1].innerHTML = `<p>Questão 2: Pressione a tecla ${nomeAlvo} no piano.</p>${criarTecladoNotas()}`;
+  perguntasPreTeste[2].innerHTML = `<p>Questão 3: Ouça a nota. Qual é o nome dela?</p><div class="preteste-controls"><button class="preteste-play" data-pretest-note="${notaAuditiva.pitch}4" type="button" aria-label="Reproduzir nota"><span aria-hidden="true">&#9654;</span></button></div>${criarOpcoesNotas("q3")}`;
+
+  for (const respostas of [respostasPreTeste, respostasPosTeste]) {
+    respostas.q1Alvo = notaPerguntaAlvo;
+    respostas.q2Alvo = notaPerguntaAlvo;
+    respostas.q3Alvo = notaPerguntaAuditiva;
   }
 }
 
@@ -1102,6 +1241,9 @@ function prepararQuestionario(titulo, textoBotao) {
   document.querySelectorAll(".preteste-option.selecionado").forEach((botao) => {
     botao.classList.remove("selecionado");
   });
+  document.querySelectorAll(".preteste-note-key.selecionado").forEach((botao) => {
+    botao.classList.remove("selecionado");
+  });
   if (preTesteTitulo) preTesteTitulo.textContent = titulo;
   if (preTesteIniciarBtn) {
     preTesteIniciarBtn.textContent = textoBotao || "Avançar";
@@ -1113,7 +1255,7 @@ function prepararQuestionario(titulo, textoBotao) {
 function abrirPosTeste() {
   questionarioAtual = "pos";
   prepararQuestionario(
-    FASE_JOGO === "andamento" ? "Pós-teste de andamento" : "Pós-teste de oitavas",
+    FASE_JOGO === "andamento" ? "Pós-teste de andamento" : FASE_JOGO === "notas" ? "Pós-teste de notas musicais" : "Pós-teste de oitavas",
     "Concluir",
   );
   if (preTesteModal) {
@@ -1132,6 +1274,10 @@ preTesteForm?.addEventListener("submit", (event) => {
     perguntaAtualIndex += 1;
     atualizarBotaoInicioPreTeste();
     return;
+  }
+
+  if (FASE_JOGO === "notas") {
+    localStorage.setItem(`resultado${questionarioAtual}Notas`, JSON.stringify(respostasQuestionarioAtual));
   }
 
   if (preTesteModal) preTesteModal.style.display = "none";
@@ -1177,17 +1323,42 @@ document.addEventListener("click", (event) => {
     return;
   }
 
+  const noteKeyButton = event.target.closest(".preteste-note-key");
+  if (noteKeyButton && FASE_JOGO === "notas") {
+    const pergunta = perguntasPreTeste[perguntaAtualIndex]?.dataset.pretestQuestion;
+    if (pergunta === "q2") {
+      const resposta = noteKeyButton.dataset.notePitch;
+      document.querySelectorAll(".preteste-note-key.selecionado").forEach((botao) => {
+        botao.classList.remove("selecionado");
+      });
+      registrarRespostaPreTeste("q2", resposta);
+      respostasQuestionarioAtual.q2Acertou = resposta === notaPerguntaAlvo;
+      noteKeyButton.classList.add("selecionado");
+    }
+    return;
+  }
+
 });
 
 const nomesDasMusicas = {
   littlestar: "Twinkle, Twinkle, Little Star - Unknown artist",
   jinglebell: "Cai Cai Balão",
+  ode: "Ode à Alegria",
   elvis: "Beethoven - Für Elise",
   bethoven: "Bethoven - Ode á Alegria",
   tchai: "Tchaikovsky - Lago dos Cisnes",
 };
 
+const nomesDasMusicasNaFaseNotas = {
+  jinglebell: "Boi da cara preta",
+  littlestar: "Brilha, brilha, estrelinha",
+  ode: "O sapo não lava o pé",
+};
+
 function obterNomeDaMusica(musicaKey) {
+  if (FASE_JOGO === "notas" && nomesDasMusicasNaFaseNotas[musicaKey]) {
+    return nomesDasMusicasNaFaseNotas[musicaKey];
+  }
   return nomesDasMusicas[musicaKey] || "Música";
 }
 
@@ -1304,6 +1475,7 @@ resetar.addEventListener("click", () => {
 
 function carregarPartituraAtual() {
   if (musica === "bethoven") carregarPartituraOdeToJoy();
+  else if (musica === "ode") carregarPartituraOdeToJoy();
   else if (musica === "tchai") carregarPartituraCisne();
   else if (musica === "littlestar") carregarPartituraTwinkle();
   else if (musica === "jinglebell") carregarPartituraJingleBell();
@@ -1351,4 +1523,3 @@ function carregarPartituraOdeToJoy() {
 function carregarPartituraJingleBell() {
   carregarNotas(jinglebell);
 }
-

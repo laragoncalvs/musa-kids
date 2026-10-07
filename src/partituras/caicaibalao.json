@@ -1,0 +1,40 @@
+[
+    {"pitch": "G4", "start_ms": 2250},
+
+    {"pitch": "G4", "start_ms": 3000},
+    {"pitch": "F4", "start_ms": 3750},
+    {"pitch": "E4", "start_ms": 4500},
+    {"pitch": "G4", "start_ms": 5250},
+
+    {"pitch": "G4", "start_ms": 6000},
+    {"pitch": "F4", "start_ms": 6750},
+    {"pitch": "E4", "start_ms": 7500},
+    {"pitch": "G4", "start_ms": 8250},
+
+    {"pitch": "A4", "start_ms": 9000},
+    {"pitch": "G4", "start_ms": 9750},
+    {"pitch": "F4", "start_ms": 10500},
+    {"pitch": "E4", "start_ms": 11250},
+
+    {"pitch": "D4", "start_ms": 12000},
+    {"pitch": "D4", "start_ms": 14250},
+    {"pitch": "E4", "start_ms": 14625},
+
+    {"pitch": "F4", "start_ms": 15000},
+    {"pitch": "D4", "start_ms": 15750},
+    {"pitch": "E4", "start_ms": 16125},
+    {"pitch": "F4", "start_ms": 16500},
+    {"pitch": "D4", "start_ms": 17250},
+    {"pitch": "E4", "start_ms": 17625},
+
+    {"pitch": "F4", "start_ms": 18000},
+    {"pitch": "G4", "start_ms": 19500},
+    {"pitch": "A4", "start_ms": 20250},
+
+    {"pitch": "G4", "start_ms": 21000},
+    {"pitch": "F4", "start_ms": 21750},
+    {"pitch": "E4", "start_ms": 22500},
+    {"pitch": "D4", "start_ms": 23250},
+
+    {"pitch": "C4", "start_ms": 24000}
+]

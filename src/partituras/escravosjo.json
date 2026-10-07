@@ -1,0 +1,190 @@
+[
+  {
+    "pitch": "G4",
+    "start_ms": 1000
+  },
+  {
+    "pitch": "C4",
+    "start_ms": 1333
+  },
+  {
+    "pitch": "B4",
+    "start_ms": 2000
+  },
+  {
+    "pitch": "A4",
+    "start_ms": 2333
+  },
+  {
+    "pitch": "G4",
+    "start_ms": 2667
+  },
+  {
+    "pitch": "A4",
+    "start_ms": 3667
+  },
+  {
+    "pitch": "G4",
+    "start_ms": 4000
+  },
+  {
+    "pitch": "A4",
+    "start_ms": 4333
+  },
+  {
+    "pitch": "G4",
+    "start_ms": 4667
+  },
+  {
+    "pitch": "F4",
+    "start_ms": 5000
+  },
+  {
+    "pitch": "E4",
+    "start_ms": 5333
+  },
+  {
+    "pitch": "G4",
+    "start_ms": 6667
+  },
+  {
+    "pitch": "E4",
+    "start_ms": 7333
+  },
+  {
+    "pitch": "G4",
+    "start_ms": 8000
+  },
+  {
+    "pitch": "E4",
+    "start_ms": 8667
+  },
+  {
+    "pitch": "E4",
+    "start_ms": 9333
+  },
+  {
+    "pitch": "E4",
+    "start_ms": 10000
+  },
+  {
+    "pitch": "D4",
+    "start_ms": 10333
+  },
+  {
+    "pitch": "C4",
+    "start_ms": 10667
+  },
+  {
+    "pitch": "G4",
+    "start_ms": 11667
+  },
+  {
+    "pitch": "A4",
+    "start_ms": 12000
+  },
+  {
+    "pitch": "G4",
+    "start_ms": 12333
+  },
+  {
+    "pitch": "E4",
+    "start_ms": 12667
+  },
+  {
+    "pitch": "G4",
+    "start_ms": 13000
+  },
+  {
+    "pitch": "A4",
+    "start_ms": 13333
+  },
+  {
+    "pitch": "G4",
+    "start_ms": 13667
+  },
+  {
+    "pitch": "E4",
+    "start_ms": 14000
+  },
+  {
+    "pitch": "G4",
+    "start_ms": 14333
+  },
+  {
+    "pitch": "A4",
+    "start_ms": 14667
+  },
+  {
+    "pitch": "G4",
+    "start_ms": 15000
+  },
+  {
+    "pitch": "A4",
+    "start_ms": 15333
+  },
+  {
+    "pitch": "B4",
+    "start_ms": 15667
+  },
+  {
+    "pitch": "C4",
+    "start_ms": 16000
+  },
+  {
+    "pitch": "G4",
+    "start_ms": 17000
+  },
+  {
+    "pitch": "A4",
+    "start_ms": 17333
+  },
+  {
+    "pitch": "G4",
+    "start_ms": 17667
+  },
+  {
+    "pitch": "E4",
+    "start_ms": 18000
+  },
+  {
+    "pitch": "G4",
+    "start_ms": 18333
+  },
+  {
+    "pitch": "A4",
+    "start_ms": 18667
+  },
+  {
+    "pitch": "G4",
+    "start_ms": 19000
+  },
+  {
+    "pitch": "E4",
+    "start_ms": 19333
+  },
+  {
+    "pitch": "G4",
+    "start_ms": 19667
+  },
+  {
+    "pitch": "A4",
+    "start_ms": 20000
+  },
+  {
+    "pitch": "G4",
+    "start_ms": 20333
+  },
+  {
+    "pitch": "A4",
+    "start_ms": 20667
+  },
+  {
+    "pitch": "B4",
+    "start_ms": 21000
+  },
+  {
+    "pitch": "C4",
+    "start_ms": 21333
+  }
+]
